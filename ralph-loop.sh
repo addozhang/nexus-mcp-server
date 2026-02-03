@@ -70,7 +70,7 @@ for i in $(seq 1 "$MAX_PLANNING_ITERS"); do
   log "\n--- PLANNING iteration $i/$MAX_PLANNING_ITERS ---"
   
   # Run opencode (auto-approve for planning phase)
-  if "$OPENCODE_BIN" run "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
+  if "$OPENCODE_BIN" run --model github-copilot/claude-opus-4.5 "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
     success "Planning iteration $i completed"
   else
     error "Planning iteration $i failed"
@@ -107,7 +107,7 @@ for i in $(seq 1 "$MAX_BUILDING_ITERS"); do
   log "\n--- BUILDING iteration $i/$MAX_BUILDING_ITERS ---"
   
   # Run opencode (auto-approve for building phase)
-  if "$OPENCODE_BIN" run "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
+  if "$OPENCODE_BIN" run --model github-copilot/claude-opus-4.5 "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
     success "Building iteration $i completed"
   else
     warn "Building iteration $i had errors, continuing..."
