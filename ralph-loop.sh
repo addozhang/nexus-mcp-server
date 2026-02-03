@@ -41,8 +41,9 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! command -v opencode &> /dev/null; then
-  error "opencode CLI not found. Install it first."
+OPENCODE_BIN="/home/addo/.opencode/bin/opencode"
+if ! [ -f "$OPENCODE_BIN" ]; then
+  error "opencode CLI not found at $OPENCODE_BIN. Install it first."
   exit 1
 fi
 
@@ -69,7 +70,7 @@ for i in $(seq 1 "$MAX_PLANNING_ITERS"); do
   log "\n--- PLANNING iteration $i/$MAX_PLANNING_ITERS ---"
   
   # Run opencode (auto-approve for planning phase)
-  if opencode run "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
+  if "$OPENCODE_BIN" run "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
     success "Planning iteration $i completed"
   else
     error "Planning iteration $i failed"
@@ -106,7 +107,7 @@ for i in $(seq 1 "$MAX_BUILDING_ITERS"); do
   log "\n--- BUILDING iteration $i/$MAX_BUILDING_ITERS ---"
   
   # Run opencode (auto-approve for building phase)
-  if opencode run "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
+  if "$OPENCODE_BIN" run "$(cat PROMPT.md)" 2>&1 | tee -a "$LOG_FILE"; then
     success "Building iteration $i completed"
   else
     warn "Building iteration $i had errors, continuing..."
