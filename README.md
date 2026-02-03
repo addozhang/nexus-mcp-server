@@ -3,57 +3,102 @@
 MCP (Model Context Protocol) server for Sonatype Nexus Pro 3, enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
 
 ## Features
-- 🔐 **Per-request authentication** via headers (no hardcoded credentials)
-- 📦 **Maven support**: Search artifacts, list versions, get metadata
-- 🐍 **Python support**: Search packages, list versions, get metadata
-- 🐳 **Docker support**: List images, get tags, image metadata
-- ⚡ **FastMCP framework**: Fast, modern Python implementation
+- **Per-request authentication** - Credentials passed as tool parameters (no hardcoded secrets)
+- **Maven support** - Search artifacts, list versions, get metadata
+- **Python support** - Search packages, list versions, get metadata
+- **Docker support** - List images, get tags, image metadata
+- **FastMCP framework** - Fast, modern Python implementation
 
-## Authentication
-Credentials are passed per-request via headers:
-- `X-Nexus-Url`: Nexus instance URL (e.g., `https://nexus.company.com`)
-- `X-Nexus-Username`: Username
-- `X-Nexus-Password`: Password
+## Installation
 
-## Quick Start
-
-### Prerequisites
-- Python 3.10+
-- Docker (for sandboxed development)
-
-### Development
+### From Source
 ```bash
+# Clone the repository
+git clone https://github.com/your-org/nexus-mcp-server.git
+cd nexus-mcp-server
+
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # or venv/bin/activate.fish
 
 # Install in development mode
 pip install -e ".[dev]"
 
-# Run tests
-pytest tests/ -v
-
-# Run server
+# Run the server
 python -m nexus_mcp
 ```
 
-## Ralph Loop Development
-This project is built using the Ralph Wiggum loop with `opencode`:
-
+### Using Docker
 ```bash
-# Run the complete loop (Planning → Building)
-./ralph-loop.sh
+docker build -t nexus-mcp-server .
+docker run -it nexus-mcp-server python -m nexus_mcp
 ```
 
-The loop will:
-1. **Plan** - Analyze specs and create implementation plan (5 iterations max)
-2. **Build** - Implement tasks, run tests, commit (10 iterations max)
-3. **Stop** - When `STATUS: COMPLETE` appears in `IMPLEMENTATION_PLAN.md`
+## Configuration
 
-### Monitoring Progress
-- Watch real-time: `tail -f .ralph/ralph.log`
-- Check plan: `cat IMPLEMENTATION_PLAN.md`
-- Review commits: `git log --oneline`
+### Authentication
+Unlike HTTP-based APIs, MCP uses stdio transport which doesn't support headers. Credentials are passed as parameters to each tool call:
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `nexus_url` | Nexus instance URL | `https://nexus.company.com` |
+| `nexus_username` | Username | `admin` |
+| `nexus_password` | Password | `secret123` |
+
+### MCP Client Configuration (Claude Desktop)
+Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "python",
+      "args": ["-m", "nexus_mcp"],
+      "cwd": "/path/to/nexus-mcp-server",
+      "env": {
+        "PATH": "/path/to/nexus-mcp-server/venv/bin:$PATH"
+      }
+    }
+  }
+}
+```
+
+## MCP Tools
+
+### Maven Tools
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_maven_artifact` | Search Maven repositories | `group_id`, `artifact_id`, `version`, `repository` |
+| `get_maven_versions` | Get all versions of an artifact | `group_id`, `artifact_id`, `repository` |
+
+### Python Tools
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_python_package` | Search Python packages | `name`, `repository` |
+| `get_python_versions` | Get all versions of a package | `package_name`, `repository` |
+
+### Docker Tools
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_docker_images` | List images in a repository | `repository` |
+| `get_docker_tags` | Get tags for an image | `repository`, `image_name` |
+
+## Development
+
+### Running Tests
+```bash
+pytest tests/ -v
+```
+
+### Type Checking
+```bash
+mypy src/
+```
+
+### Linting
+```bash
+ruff check src/ tests/
+```
 
 ## Project Structure
 ```
@@ -65,26 +110,42 @@ nexus-mcp-server/
 │   ├── docker-support.md
 │   └── mcp-architecture.md
 ├── src/nexus_mcp/           # Source code
-│   ├── server.py            # Main MCP server
+│   ├── __init__.py          # Package init with version
+│   ├── __main__.py          # CLI entry point
+│   ├── server.py            # FastMCP server with tools
 │   ├── nexus_client.py      # Nexus REST API client
-│   └── tools/               # MCP tool implementations
+│   ├── auth.py              # Authentication types
+│   └── tools/               # Tool implementations
+│       ├── __init__.py
+│       └── implementations.py
 ├── tests/                   # Test suite
-├── AGENTS.md                # Operational guide & backpressure commands
-├── IMPLEMENTATION_PLAN.md   # Current tasks & progress
-├── ralph-loop.sh            # Ralph Wiggum automation script
+│   ├── conftest.py          # Fixtures and sample data
+│   ├── test_nexus_client.py # Client unit tests
+│   └── test_tools.py        # Tool integration tests
+├── AGENTS.md                # Operational guide
+├── IMPLEMENTATION_PLAN.md   # Task tracking
 └── pyproject.toml           # Python project metadata
 ```
 
-## MCP Tools
-- `search_maven_artifact` - Search Maven repositories
-- `get_maven_versions` - Get versions of a Maven artifact
-- `search_python_package` - Search Python packages
-- `get_python_versions` - Get versions of a Python package
-- `list_docker_images` - List Docker images
-- `get_docker_tags` - Get tags for a Docker image
+## Troubleshooting
+
+### Connection Errors
+- Verify `nexus_url` is correct and accessible
+- Check network connectivity to your Nexus instance
+- Ensure HTTPS certificates are valid (or use HTTP for local instances)
+
+### Authentication Errors
+- Verify username and password are correct
+- Ensure the user has read permissions on the repositories
+- Check if the Nexus instance requires specific authentication methods
+
+### Empty Results
+- Verify the repository name is correct
+- Check that the package/artifact exists in Nexus
+- For Python packages, try both hyphen and underscore naming
 
 ## License
 MIT
 
 ## Contributing
-This project is auto-generated using the Ralph loop. Manual contributions welcome!
+Contributions welcome! Please run tests and linting before submitting PRs.

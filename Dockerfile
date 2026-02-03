@@ -9,13 +9,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
-COPY . .
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+COPY tests/ ./tests/
 
-# Create virtual environment and install dependencies
-RUN python -m venv venv && \
-    . venv/bin/activate && \
-    pip install --upgrade pip && \
+# Install dependencies directly (no venv needed in container)
+RUN pip install --upgrade pip && \
     pip install -e ".[dev]"
 
-# Default command (can be overridden)
-CMD ["/bin/bash"]
+# Default command: run the MCP server
+CMD ["python", "-m", "nexus_mcp"]

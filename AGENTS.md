@@ -54,8 +54,37 @@ nexus-mcp-server/
 - `ruff` - Linting
 
 ### Operational Learnings
-*(Will be updated during BUILDING iterations)*
 
-- Add learnings about Nexus API quirks here
-- Document any authentication edge cases
-- Note performance considerations
+#### FastMCP Framework
+- FastMCP's `@mcp.tool` decorator wraps functions into `FunctionTool` objects, making them non-callable directly
+- For testability, separate tool implementation functions (`*_impl`) from MCP decorators
+- Import implementations in `server.py` and wrap them with `@mcp.tool`
+
+#### MCP Protocol & Authentication
+- MCP protocol (stdio transport) does not support HTTP headers
+- Credentials must be passed as tool parameters: `nexus_url`, `nexus_username`, `nexus_password`
+- Each tool call receives fresh credentials, enabling multi-tenant use
+
+#### Nexus API Quirks
+- Search API uses `format` parameter for repository type filtering (maven2, pypi, docker)
+- Maven coordinates: use `maven.groupId`, `maven.artifactId`, `maven.version` params
+- Python packages: may need to normalize names (hyphen vs underscore)
+- Pagination uses `continuationToken` in response, pass back as query param
+
+#### Testing with respx
+- Use `httpx.ConnectError` (not generic `Exception`) for connection error mocking
+- Import sorting: `httpx` before `respx` when both needed
+- `respx.mock` decorator handles async test functions automatically
+
+#### Project Structure
+```
+src/nexus_mcp/
+├── __init__.py          # Version and main() entry point
+├── __main__.py          # CLI runner: python -m nexus_mcp
+├── server.py            # FastMCP server with @mcp.tool decorators
+├── nexus_client.py      # Async httpx client for Nexus REST API
+├── auth.py              # NexusConnectionParams type definitions
+└── tools/
+    ├── __init__.py      # Re-exports implementations
+    └── implementations.py  # Testable tool functions (*_impl)
+```
