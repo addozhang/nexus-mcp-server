@@ -1,5 +1,7 @@
 # Nexus MCP Server
 
+English | [简体中文](README.zh-CN.md)
+
 MCP (Model Context Protocol) server for Sonatype Nexus Pro 3, enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
 
 ## Features
