@@ -178,40 +178,6 @@ nexus-mcp-server/
 - Check that the package/artifact exists in Nexus
 - For Python packages, try both hyphen and underscore naming
 
-## Migration from stdio Transport
-
-If you were using the previous stdio-based transport, update your MCP client configuration:
-
-**Before (stdio):**
-```json
-{
-  "mcpServers": {
-    "nexus": {
-      "command": "python",
-      "args": ["-m", "nexus_mcp"]
-    }
-  }
-}
-```
-
-**After (HTTP streaming):**
-```json
-{
-  "mcpServers": {
-    "nexus": {
-      "url": "http://localhost:8000/sse",
-      "headers": {
-        "X-Nexus-Url": "https://nexus.company.com",
-        "X-Nexus-Username": "admin",
-        "X-Nexus-Password": "secret123"
-      }
-    }
-  }
-}
-```
-
-Note: Tool parameters no longer include `nexus_url`, `nexus_username`, or `nexus_password`. These are now extracted from HTTP headers automatically.
-
 ## License
 MIT
 

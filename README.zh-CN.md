@@ -5,7 +5,8 @@
 适用于 Sonatype Nexus Pro 3 的 MCP (Model Context Protocol) 服务器，让 AI 助手能够查询 Maven、Python (PyPI) 和 Docker 仓库。
 
 ## 功能特性
-- 🔐 **按请求认证** - 凭证通过工具参数传递（无需硬编码密钥）
+- 🌐 **HTTP 流式传输** - 基于 SSE 的现代化传输，支持 HTTP 头认证
+- 🔐 **按请求认证** - 凭证通过 HTTP 头传递（无需硬编码密钥）
 - 📦 **Maven 支持** - 搜索制品、列出版本、获取元数据
 - 🐍 **Python 支持** - 搜索包、列出版本、获取元数据
 - 🐳 **Docker 支持** - 列出镜像、获取标签、镜像元数据
@@ -33,19 +34,27 @@ python -m nexus_mcp
 ### 使用 Docker
 ```bash
 docker build -t nexus-mcp-server .
-docker run -it nexus-mcp-server python -m nexus_mcp
+docker run -p 8000:8000 nexus-mcp-server
 ```
 
 ## 配置
 
-### 认证方式
-与基于 HTTP 的 API 不同，MCP 使用 stdio 传输，不支持 HTTP 头。凭证作为参数传递给每个工具调用：
+### 服务器配置
+服务器可通过环境变量进行配置：
 
-| 参数 | 描述 | 示例 |
+| 变量 | 描述 | 默认值 |
+|------|------|--------|
+| `NEXUS_MCP_HOST` | 绑定的主机地址 | `0.0.0.0` |
+| `NEXUS_MCP_PORT` | 监听端口 | `8000` |
+
+### 通过 HTTP 头认证
+凭证通过每个请求的 HTTP 头传递：
+
+| 头 | 描述 | 示例 |
 |------|------|------|
-| `nexus_url` | Nexus 实例 URL | `https://nexus.company.com` |
-| `nexus_username` | 用户名 | `admin` |
-| `nexus_password` | 密码 | `secret123` |
+| `X-Nexus-Url` | Nexus 实例 URL | `https://nexus.company.com` |
+| `X-Nexus-Username` | 用户名 | `admin` |
+| `X-Nexus-Password` | 密码 | `secret123` |
 
 ### MCP 客户端配置（Claude Desktop）
 添加到 Claude Desktop 配置文件 (`~/.config/claude/claude_desktop_config.json`)：
@@ -54,11 +63,11 @@ docker run -it nexus-mcp-server python -m nexus_mcp
 {
   "mcpServers": {
     "nexus": {
-      "command": "python",
-      "args": ["-m", "nexus_mcp"],
-      "cwd": "/path/to/nexus-mcp-server",
-      "env": {
-        "PATH": "/path/to/nexus-mcp-server/venv/bin:$PATH"
+      "url": "http://localhost:8000/sse",
+      "headers": {
+        "X-Nexus-Url": "https://nexus.company.com",
+        "X-Nexus-Username": "admin",
+        "X-Nexus-Password": "secret123"
       }
     }
   }
@@ -77,9 +86,6 @@ docker run -it nexus-mcp-server python -m nexus_mcp
 ```python
 # 搜索 Spring Boot
 search_maven_artifact(
-    nexus_url="https://nexus.example.com",
-    nexus_username="user",
-    nexus_password="pass",
     group_id="org.springframework.boot",
     artifact_id="spring-boot-starter",
     repository="maven-central"
@@ -96,9 +102,6 @@ search_maven_artifact(
 ```python
 # 搜索 requests 包
 search_python_package(
-    nexus_url="https://nexus.example.com",
-    nexus_username="user",
-    nexus_password="pass",
     name="requests",
     repository="pypi-proxy"
 )
@@ -114,9 +117,6 @@ search_python_package(
 ```python
 # 列出 Docker 镜像
 list_docker_images(
-    nexus_url="https://nexus.example.com",
-    nexus_username="user",
-    nexus_password="pass",
     repository="docker-hosted"
 )
 ```
@@ -151,20 +151,23 @@ nexus-mcp-server/
 │   ├── maven-support.md      # Maven 支持
 │   ├── python-support.md     # Python 支持
 │   ├── docker-support.md     # Docker 支持
-│   └── mcp-architecture.md   # MCP 架构
+│   ├── mcp-architecture.md   # MCP 架构
+│   └── http-streaming.md     # HTTP 流式传输
 ├── src/nexus_mcp/           # 源代码
 │   ├── __init__.py          # 包初始化（含版本号）
 │   ├── __main__.py          # CLI 入口点
 │   ├── server.py            # FastMCP 服务器及工具定义
 │   ├── nexus_client.py      # Nexus REST API 客户端
 │   ├── auth.py              # 认证类型定义
+│   ├── dependencies.py      # 从请求头提取凭证
 │   └── tools/               # 工具实现
 │       ├── __init__.py
 │       └── implementations.py
 ├── tests/                   # 测试套件
 │   ├── conftest.py          # 测试夹具和样本数据
 │   ├── test_nexus_client.py # 客户端单元测试
-│   └── test_tools.py        # 工具集成测试
+│   ├── test_tools.py        # 工具集成测试
+│   └── test_http_transport.py # HTTP 传输测试
 ├── AGENTS.md                # 运维指南
 ├── IMPLEMENTATION_PLAN.md   # 任务跟踪
 └── pyproject.toml           # Python 项目元数据
@@ -173,24 +176,25 @@ nexus-mcp-server/
 ## 故障排查
 
 ### 连接错误
-- 验证 `nexus_url` 正确且可访问
+- 验证 MCP 服务器正在运行 (`python -m nexus_mcp`)
+- 检查端口 8000 是否可访问
+- 验证 `X-Nexus-Url` 头正确且可访问
 - 检查到 Nexus 实例的网络连接
 - 确保 HTTPS 证书有效（或对本地实例使用 HTTP）
 
 ### 认证错误
-- 验证用户名和密码正确
+- 验证 `X-Nexus-Username` 和 `X-Nexus-Password` 头正确
 - 确保用户对仓库有读取权限
 - 检查 Nexus 实例是否需要特定认证方法
+
+### 缺少凭证错误
+- 确保设置了所有三个头：`X-Nexus-Url`、`X-Nexus-Username`、`X-Nexus-Password`
+- 检查 MCP 客户端是否支持 HTTP 头
 
 ### 空结果
 - 验证仓库名称正确
 - 检查包/制品在 Nexus 中是否存在
 - 对于 Python 包，尝试使用连字符和下划线两种命名方式
-
-### MCP 客户端问题
-- 确保 Python 虚拟环境路径正确
-- 检查 `python -m nexus_mcp` 可以独立运行
-- 查看 Claude Desktop 日志了解详细错误信息
 
 ## 技术栈
 - **Python 3.10+** - 现代 Python 特性
@@ -200,7 +204,6 @@ nexus-mcp-server/
 - **pytest** - 测试框架
 
 ## 限制说明
-- **MCP 协议限制**：不支持 HTTP 头，凭证必须通过工具参数传递
 - **Nexus API**：依赖 Nexus REST API v1（Nexus 3.x）
 - **认证方式**：目前仅支持 HTTP Basic Auth
 
