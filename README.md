@@ -5,7 +5,8 @@ English | [简体中文](README.zh-CN.md)
 MCP (Model Context Protocol) server for Sonatype Nexus Pro 3, enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
 
 ## Features
-- **Per-request authentication** - Credentials passed as tool parameters (no hardcoded secrets)
+- **HTTP streaming transport** - Modern SSE-based transport with header authentication
+- **Per-request authentication** - Credentials passed via HTTP headers (no hardcoded secrets)
 - **Maven support** - Search artifacts, list versions, get metadata
 - **Python support** - Search packages, list versions, get metadata
 - **Docker support** - List images, get tags, image metadata
@@ -26,26 +27,34 @@ source venv/bin/activate  # or venv/bin/activate.fish
 # Install in development mode
 pip install -e ".[dev]"
 
-# Run the server
+# Run the server (defaults to http://0.0.0.0:8000)
 python -m nexus_mcp
 ```
 
 ### Using Docker
 ```bash
 docker build -t nexus-mcp-server .
-docker run -it nexus-mcp-server python -m nexus_mcp
+docker run -p 8000:8000 nexus-mcp-server
 ```
 
 ## Configuration
 
-### Authentication
-Unlike HTTP-based APIs, MCP uses stdio transport which doesn't support headers. Credentials are passed as parameters to each tool call:
+### Server Configuration
+The server can be configured using environment variables:
 
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `nexus_url` | Nexus instance URL | `https://nexus.company.com` |
-| `nexus_username` | Username | `admin` |
-| `nexus_password` | Password | `secret123` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NEXUS_MCP_HOST` | Host to bind to | `0.0.0.0` |
+| `NEXUS_MCP_PORT` | Port to listen on | `8000` |
+
+### Authentication via HTTP Headers
+Credentials are passed as HTTP headers with each request:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-Nexus-Url` | Nexus instance URL | `https://nexus.company.com` |
+| `X-Nexus-Username` | Username | `admin` |
+| `X-Nexus-Password` | Password | `secret123` |
 
 ### MCP Client Configuration (Claude Desktop)
 Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json`):
@@ -54,13 +63,27 @@ Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_confi
 {
   "mcpServers": {
     "nexus": {
-      "command": "python",
-      "args": ["-m", "nexus_mcp"],
-      "cwd": "/path/to/nexus-mcp-server",
-      "env": {
-        "PATH": "/path/to/nexus-mcp-server/venv/bin:$PATH"
+      "url": "http://localhost:8000/sse",
+      "headers": {
+        "X-Nexus-Url": "https://nexus.company.com",
+        "X-Nexus-Username": "admin",
+        "X-Nexus-Password": "secret123"
       }
     }
+  }
+}
+```
+
+### MCP Client Configuration (Other Clients)
+For other MCP clients that support HTTP transport:
+
+```json
+{
+  "url": "http://localhost:8000/sse",
+  "headers": {
+    "X-Nexus-Url": "https://nexus.company.com",
+    "X-Nexus-Username": "your-username",
+    "X-Nexus-Password": "your-password"
   }
 }
 ```
@@ -110,20 +133,23 @@ nexus-mcp-server/
 │   ├── maven-support.md
 │   ├── python-support.md
 │   ├── docker-support.md
-│   └── mcp-architecture.md
+│   ├── mcp-architecture.md
+│   └── http-streaming.md
 ├── src/nexus_mcp/           # Source code
 │   ├── __init__.py          # Package init with version
 │   ├── __main__.py          # CLI entry point
 │   ├── server.py            # FastMCP server with tools
 │   ├── nexus_client.py      # Nexus REST API client
 │   ├── auth.py              # Authentication types
+│   ├── dependencies.py      # Credential extraction from headers
 │   └── tools/               # Tool implementations
 │       ├── __init__.py
 │       └── implementations.py
 ├── tests/                   # Test suite
 │   ├── conftest.py          # Fixtures and sample data
 │   ├── test_nexus_client.py # Client unit tests
-│   └── test_tools.py        # Tool integration tests
+│   ├── test_tools.py        # Tool integration tests
+│   └── test_http_transport.py # HTTP transport tests
 ├── AGENTS.md                # Operational guide
 ├── IMPLEMENTATION_PLAN.md   # Task tracking
 └── pyproject.toml           # Python project metadata
@@ -132,19 +158,59 @@ nexus-mcp-server/
 ## Troubleshooting
 
 ### Connection Errors
-- Verify `nexus_url` is correct and accessible
+- Verify the MCP server is running (`python -m nexus_mcp`)
+- Check that port 8000 is accessible
+- Verify `X-Nexus-Url` header is correct and accessible
 - Check network connectivity to your Nexus instance
 - Ensure HTTPS certificates are valid (or use HTTP for local instances)
 
 ### Authentication Errors
-- Verify username and password are correct
+- Verify `X-Nexus-Username` and `X-Nexus-Password` headers are correct
 - Ensure the user has read permissions on the repositories
 - Check if the Nexus instance requires specific authentication methods
+
+### Missing Credentials Error
+- Ensure all three headers are set: `X-Nexus-Url`, `X-Nexus-Username`, `X-Nexus-Password`
+- Check that your MCP client supports HTTP headers
 
 ### Empty Results
 - Verify the repository name is correct
 - Check that the package/artifact exists in Nexus
 - For Python packages, try both hyphen and underscore naming
+
+## Migration from stdio Transport
+
+If you were using the previous stdio-based transport, update your MCP client configuration:
+
+**Before (stdio):**
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "python",
+      "args": ["-m", "nexus_mcp"]
+    }
+  }
+}
+```
+
+**After (HTTP streaming):**
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "url": "http://localhost:8000/sse",
+      "headers": {
+        "X-Nexus-Url": "https://nexus.company.com",
+        "X-Nexus-Username": "admin",
+        "X-Nexus-Password": "secret123"
+      }
+    }
+  }
+}
+```
+
+Note: Tool parameters no longer include `nexus_url`, `nexus_username`, or `nexus_password`. These are now extracted from HTTP headers automatically.
 
 ## License
 MIT

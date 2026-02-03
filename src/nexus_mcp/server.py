@@ -5,6 +5,8 @@ from typing import Annotated, Any
 
 from fastmcp import FastMCP
 from pydantic import Field
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from nexus_mcp.dependencies import (
     InvalidCredentialsError,
@@ -45,6 +47,21 @@ mcp = FastMCP(
     - get_docker_tags: Get tags for a specific Docker image
     """,
 )
+
+
+# ============================================================================
+# Health Check Endpoint
+# ============================================================================
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    """Health check endpoint for container orchestration."""
+    return JSONResponse({
+        "status": "healthy",
+        "service": "nexus-mcp",
+        "version": "0.1.0",
+    })
 
 
 def _get_credentials_or_error() -> dict[str, Any] | None:

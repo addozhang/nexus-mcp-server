@@ -1,21 +1,31 @@
-# Dockerfile for Nexus MCP Server (Sandboxed Development)
+# Dockerfile for Nexus MCP Server
 FROM python:3.11-slim
 
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
-COPY tests/ ./tests/
 
 # Install dependencies directly (no venv needed in container)
 RUN pip install --upgrade pip && \
-    pip install -e ".[dev]"
+    pip install -e .
+
+# Expose HTTP port
+EXPOSE 8000
+
+# Environment variables for configuration
+ENV NEXUS_MCP_HOST=0.0.0.0
+ENV NEXUS_MCP_PORT=8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Default command: run the MCP server
 CMD ["python", "-m", "nexus_mcp"]
