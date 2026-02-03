@@ -16,16 +16,9 @@ from nexus_mcp.nexus_client import (
 )
 
 
-def _create_client(
-    nexus_url: str, nexus_username: str, nexus_password: str
-) -> NexusClient:
-    """Create a NexusClient from parameters."""
-    credentials = NexusCredentials(
-        url=nexus_url,
-        username=nexus_username,
-        password=nexus_password,
-    )
-    return NexusClient(credentials)
+def _create_client(creds: NexusCredentials) -> NexusClient:
+    """Create a NexusClient from credentials."""
+    return NexusClient(creds)
 
 
 def _format_search_results(results: list[SearchResult]) -> list[dict[str, Any]]:
@@ -64,9 +57,7 @@ def _handle_nexus_error(e: NexusError) -> str:
 
 
 async def search_maven_artifact_impl(
-    nexus_url: str,
-    nexus_username: str,
-    nexus_password: str,
+    creds: NexusCredentials,
     group_id: str | None = None,
     artifact_id: str | None = None,
     version: str | None = None,
@@ -81,7 +72,7 @@ async def search_maven_artifact_impl(
         return {"error": "At least one of group_id or artifact_id must be provided"}
 
     try:
-        client = _create_client(nexus_url, nexus_username, nexus_password)
+        client = _create_client(creds)
         results = await client.search_all(
             repository=repository,
             format="maven2",
@@ -102,9 +93,7 @@ async def search_maven_artifact_impl(
 
 
 async def get_maven_versions_impl(
-    nexus_url: str,
-    nexus_username: str,
-    nexus_password: str,
+    creds: NexusCredentials,
     group_id: str,
     artifact_id: str,
     repository: str | None = None,
@@ -115,7 +104,7 @@ async def get_maven_versions_impl(
     sorted from newest to oldest.
     """
     try:
-        client = _create_client(nexus_url, nexus_username, nexus_password)
+        client = _create_client(creds)
         results = await client.search_all(
             repository=repository,
             format="maven2",
@@ -160,9 +149,7 @@ async def get_maven_versions_impl(
 
 
 async def search_python_package_impl(
-    nexus_url: str,
-    nexus_username: str,
-    nexus_password: str,
+    creds: NexusCredentials,
     name: str,
     repository: str | None = None,
 ) -> dict[str, Any]:
@@ -172,7 +159,7 @@ async def search_python_package_impl(
     Handles Python package naming conventions (underscores vs hyphens).
     """
     try:
-        client = _create_client(nexus_url, nexus_username, nexus_password)
+        client = _create_client(creds)
 
         # Search with original name
         results = await client.search_all(
@@ -205,9 +192,7 @@ async def search_python_package_impl(
 
 
 async def get_python_versions_impl(
-    nexus_url: str,
-    nexus_username: str,
-    nexus_password: str,
+    creds: NexusCredentials,
     package_name: str,
     repository: str | None = None,
 ) -> dict[str, Any]:
@@ -217,7 +202,7 @@ async def get_python_versions_impl(
     (wheel, sdist, etc.) and download URLs.
     """
     try:
-        client = _create_client(nexus_url, nexus_username, nexus_password)
+        client = _create_client(creds)
 
         # Search with original name
         results = await client.search_all(
@@ -283,9 +268,7 @@ async def get_python_versions_impl(
 
 
 async def list_docker_images_impl(
-    nexus_url: str,
-    nexus_username: str,
-    nexus_password: str,
+    creds: NexusCredentials,
     repository: str,
 ) -> dict[str, Any]:
     """List Docker images in a Nexus repository.
@@ -294,7 +277,7 @@ async def list_docker_images_impl(
     with their latest tags.
     """
     try:
-        client = _create_client(nexus_url, nexus_username, nexus_password)
+        client = _create_client(creds)
 
         results = await client.search_all(
             repository=repository,
@@ -330,9 +313,7 @@ async def list_docker_images_impl(
 
 
 async def get_docker_tags_impl(
-    nexus_url: str,
-    nexus_username: str,
-    nexus_password: str,
+    creds: NexusCredentials,
     repository: str,
     image_name: str,
 ) -> dict[str, Any]:
@@ -342,7 +323,7 @@ async def get_docker_tags_impl(
     including digest and asset information when available.
     """
     try:
-        client = _create_client(nexus_url, nexus_username, nexus_password)
+        client = _create_client(creds)
 
         results = await client.search_all(
             repository=repository,

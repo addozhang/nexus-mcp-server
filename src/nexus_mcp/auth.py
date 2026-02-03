@@ -1,7 +1,5 @@
 """Authentication and credential handling for Nexus MCP Server."""
 
-from typing import Annotated
-
 from pydantic import BaseModel, Field
 
 from nexus_mcp.nexus_client import NexusClient, NexusCredentials
@@ -13,18 +11,18 @@ class NexusConnectionParams(BaseModel):
     These can be passed as tool parameters or extracted from request context.
     """
 
-    nexus_url: Annotated[
-        str,
-        Field(description="Base URL of the Nexus instance (e.g., https://nexus.example.com)"),
-    ]
-    nexus_username: Annotated[
-        str,
-        Field(description="Username for Nexus authentication"),
-    ]
-    nexus_password: Annotated[
-        str,
-        Field(description="Password for Nexus authentication"),
-    ]
+    nexus_url: str = Field(
+        ...,
+        description="Base URL of the Nexus instance (e.g., https://nexus.example.com)",
+    )
+    nexus_username: str = Field(
+        ...,
+        description="Username for Nexus authentication",
+    )
+    nexus_password: str = Field(
+        ...,
+        description="Password for Nexus authentication",
+    )
 
     def to_credentials(self) -> NexusCredentials:
         """Convert to NexusCredentials for the client."""
@@ -39,16 +37,10 @@ class NexusConnectionParams(BaseModel):
         return NexusClient(self.to_credentials())
 
 
-# Type alias for use in tool function signatures
-NexusUrl = Annotated[
-    str,
-    Field(description="Base URL of the Nexus instance (e.g., https://nexus.example.com)"),
-]
-NexusUsername = Annotated[
-    str,
-    Field(description="Username for Nexus authentication"),
-]
-NexusPassword = Annotated[
-    str,
-    Field(description="Password for Nexus authentication"),
+# Re-export credential utilities from dependencies module
+# These are the primary way to access credentials in tools
+__all__ = [
+    "NexusConnectionParams",
+    "NexusCredentials",
+    "NexusClient",
 ]

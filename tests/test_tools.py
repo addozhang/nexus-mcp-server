@@ -9,6 +9,7 @@ from conftest import (
 )
 from httpx import Response
 
+from nexus_mcp.nexus_client import NexusCredentials
 from nexus_mcp.tools.implementations import (
     get_docker_tags_impl,
     get_maven_versions_impl,
@@ -17,6 +18,16 @@ from nexus_mcp.tools.implementations import (
     search_maven_artifact_impl,
     search_python_package_impl,
 )
+
+
+# Helper to create test credentials
+def make_creds(url: str = "https://nexus.example.com") -> NexusCredentials:
+    """Create test credentials."""
+    return NexusCredentials(
+        url=url,
+        username="user",
+        password="pass",
+    )
 
 
 class TestMavenTools:
@@ -30,9 +41,7 @@ class TestMavenTools:
         )
 
         result = await search_maven_artifact_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             group_id="com.example",
             artifact_id="artifact",
         )
@@ -46,9 +55,7 @@ class TestMavenTools:
     async def test_search_maven_artifact_requires_params(self) -> None:
         """Search without group_id or artifact_id should return error."""
         result = await search_maven_artifact_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
         )
 
         assert "error" in result
@@ -62,9 +69,7 @@ class TestMavenTools:
         )
 
         result = await search_maven_artifact_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="wrongpass",
+            creds=make_creds(),
             group_id="com.example",
         )
 
@@ -79,9 +84,7 @@ class TestMavenTools:
         )
 
         result = await get_maven_versions_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             group_id="com.example",
             artifact_id="artifact",
         )
@@ -103,9 +106,7 @@ class TestPythonTools:
         )
 
         result = await search_python_package_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             name="requests",
         )
 
@@ -124,9 +125,7 @@ class TestPythonTools:
         ]
 
         result = await search_python_package_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             name="my-package",  # Has hyphen, will try underscore too
         )
 
@@ -142,9 +141,7 @@ class TestPythonTools:
         )
 
         result = await get_python_versions_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             package_name="requests",
         )
 
@@ -164,9 +161,7 @@ class TestDockerTools:
         )
 
         result = await list_docker_images_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             repository="docker-hosted",
         )
 
@@ -184,9 +179,7 @@ class TestDockerTools:
         )
 
         result = await get_docker_tags_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             repository="docker-hosted",
             image_name="my-app",
         )
@@ -209,9 +202,7 @@ class TestErrorHandling:
         )
 
         result = await search_maven_artifact_impl(
-            nexus_url="https://nexus.example.com",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(),
             group_id="com.example",
         )
 
@@ -221,9 +212,7 @@ class TestErrorHandling:
     async def test_invalid_url(self) -> None:
         """Invalid URL should return error."""
         result = await search_maven_artifact_impl(
-            nexus_url="not-a-valid-url",
-            nexus_username="user",
-            nexus_password="pass",
+            creds=make_creds(url="not-a-valid-url"),
             group_id="com.example",
         )
 

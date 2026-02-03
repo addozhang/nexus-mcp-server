@@ -6,7 +6,11 @@ from typing import Annotated, Any
 from fastmcp import FastMCP
 from pydantic import Field
 
-from nexus_mcp.auth import NexusPassword, NexusUrl, NexusUsername
+from nexus_mcp.dependencies import (
+    InvalidCredentialsError,
+    MissingCredentialsError,
+    get_nexus_credentials,
+)
 from nexus_mcp.tools.implementations import (
     get_docker_tags_impl,
     get_maven_versions_impl,
@@ -27,10 +31,10 @@ mcp = FastMCP(
     This server provides tools to search and query Maven, Python (PyPI), and Docker
     repositories hosted in Nexus Repository Manager.
 
-    All tools require Nexus connection credentials:
-    - nexus_url: The base URL of your Nexus instance
-    - nexus_username: Your Nexus username
-    - nexus_password: Your Nexus password
+    Authentication is handled via HTTP headers:
+    - X-Nexus-Url: The base URL of your Nexus instance
+    - X-Nexus-Username: Your Nexus username
+    - X-Nexus-Password: Your Nexus password
 
     Available tools:
     - search_maven_artifact: Search for Maven artifacts by group/artifact ID
@@ -43,6 +47,20 @@ mcp = FastMCP(
 )
 
 
+def _get_credentials_or_error() -> dict[str, Any] | None:
+    """Get credentials from headers or return error dict.
+
+    Returns None if credentials are valid, error dict otherwise.
+    """
+    try:
+        get_nexus_credentials()
+        return None
+    except MissingCredentialsError as e:
+        return {"error": f"Authentication error: {e}"}
+    except InvalidCredentialsError as e:
+        return {"error": f"Invalid credentials: {e}"}
+
+
 # ============================================================================
 # Maven Tools
 # ============================================================================
@@ -50,9 +68,6 @@ mcp = FastMCP(
 
 @mcp.tool
 async def search_maven_artifact(
-    nexus_url: NexusUrl,
-    nexus_username: NexusUsername,
-    nexus_password: NexusPassword,
     group_id: Annotated[
         str | None,
         Field(description="Maven groupId to search for (e.g., 'org.apache.maven')"),
@@ -74,11 +89,19 @@ async def search_maven_artifact(
 
     Search Maven repositories by groupId, artifactId, or version.
     Returns matching artifacts with their versions and download URLs.
+
+    Requires authentication via HTTP headers:
+    - X-Nexus-Url: Nexus instance URL
+    - X-Nexus-Username: Username
+    - X-Nexus-Password: Password
     """
+    try:
+        creds = get_nexus_credentials()
+    except (MissingCredentialsError, InvalidCredentialsError) as e:
+        return {"error": f"Authentication error: {e}"}
+
     return await search_maven_artifact_impl(
-        nexus_url=nexus_url,
-        nexus_username=nexus_username,
-        nexus_password=nexus_password,
+        creds=creds,
         group_id=group_id,
         artifact_id=artifact_id,
         version=version,
@@ -88,9 +111,6 @@ async def search_maven_artifact(
 
 @mcp.tool
 async def get_maven_versions(
-    nexus_url: NexusUrl,
-    nexus_username: NexusUsername,
-    nexus_password: NexusPassword,
     group_id: Annotated[
         str,
         Field(description="Maven groupId (e.g., 'org.apache.maven')"),
@@ -108,11 +128,19 @@ async def get_maven_versions(
 
     Returns a list of all available versions for the specified groupId:artifactId,
     sorted from newest to oldest.
+
+    Requires authentication via HTTP headers:
+    - X-Nexus-Url: Nexus instance URL
+    - X-Nexus-Username: Username
+    - X-Nexus-Password: Password
     """
+    try:
+        creds = get_nexus_credentials()
+    except (MissingCredentialsError, InvalidCredentialsError) as e:
+        return {"error": f"Authentication error: {e}"}
+
     return await get_maven_versions_impl(
-        nexus_url=nexus_url,
-        nexus_username=nexus_username,
-        nexus_password=nexus_password,
+        creds=creds,
         group_id=group_id,
         artifact_id=artifact_id,
         repository=repository,
@@ -126,9 +154,6 @@ async def get_maven_versions(
 
 @mcp.tool
 async def search_python_package(
-    nexus_url: NexusUrl,
-    nexus_username: NexusUsername,
-    nexus_password: NexusPassword,
     name: Annotated[
         str,
         Field(description="Python package name to search for (e.g., 'requests')"),
@@ -142,11 +167,19 @@ async def search_python_package(
 
     Searches PyPI-format repositories for packages matching the given name.
     Handles Python package naming conventions (underscores vs hyphens).
+
+    Requires authentication via HTTP headers:
+    - X-Nexus-Url: Nexus instance URL
+    - X-Nexus-Username: Username
+    - X-Nexus-Password: Password
     """
+    try:
+        creds = get_nexus_credentials()
+    except (MissingCredentialsError, InvalidCredentialsError) as e:
+        return {"error": f"Authentication error: {e}"}
+
     return await search_python_package_impl(
-        nexus_url=nexus_url,
-        nexus_username=nexus_username,
-        nexus_password=nexus_password,
+        creds=creds,
         name=name,
         repository=repository,
     )
@@ -154,9 +187,6 @@ async def search_python_package(
 
 @mcp.tool
 async def get_python_versions(
-    nexus_url: NexusUrl,
-    nexus_username: NexusUsername,
-    nexus_password: NexusPassword,
     package_name: Annotated[
         str,
         Field(description="Python package name (e.g., 'requests')"),
@@ -170,11 +200,19 @@ async def get_python_versions(
 
     Returns all available versions of the package with format information
     (wheel, sdist, etc.) and download URLs.
+
+    Requires authentication via HTTP headers:
+    - X-Nexus-Url: Nexus instance URL
+    - X-Nexus-Username: Username
+    - X-Nexus-Password: Password
     """
+    try:
+        creds = get_nexus_credentials()
+    except (MissingCredentialsError, InvalidCredentialsError) as e:
+        return {"error": f"Authentication error: {e}"}
+
     return await get_python_versions_impl(
-        nexus_url=nexus_url,
-        nexus_username=nexus_username,
-        nexus_password=nexus_password,
+        creds=creds,
         package_name=package_name,
         repository=repository,
     )
@@ -187,9 +225,6 @@ async def get_python_versions(
 
 @mcp.tool
 async def list_docker_images(
-    nexus_url: NexusUrl,
-    nexus_username: NexusUsername,
-    nexus_password: NexusPassword,
     repository: Annotated[
         str,
         Field(description="Docker repository name to list images from"),
@@ -199,20 +234,25 @@ async def list_docker_images(
 
     Returns all Docker images available in the specified repository
     with their latest tags.
+
+    Requires authentication via HTTP headers:
+    - X-Nexus-Url: Nexus instance URL
+    - X-Nexus-Username: Username
+    - X-Nexus-Password: Password
     """
+    try:
+        creds = get_nexus_credentials()
+    except (MissingCredentialsError, InvalidCredentialsError) as e:
+        return {"error": f"Authentication error: {e}"}
+
     return await list_docker_images_impl(
-        nexus_url=nexus_url,
-        nexus_username=nexus_username,
-        nexus_password=nexus_password,
+        creds=creds,
         repository=repository,
     )
 
 
 @mcp.tool
 async def get_docker_tags(
-    nexus_url: NexusUrl,
-    nexus_username: NexusUsername,
-    nexus_password: NexusPassword,
     repository: Annotated[
         str,
         Field(description="Docker repository name"),
@@ -226,21 +266,35 @@ async def get_docker_tags(
 
     Returns detailed information about all tags for the specified image,
     including digest and asset information when available.
+
+    Requires authentication via HTTP headers:
+    - X-Nexus-Url: Nexus instance URL
+    - X-Nexus-Username: Username
+    - X-Nexus-Password: Password
     """
+    try:
+        creds = get_nexus_credentials()
+    except (MissingCredentialsError, InvalidCredentialsError) as e:
+        return {"error": f"Authentication error: {e}"}
+
     return await get_docker_tags_impl(
-        nexus_url=nexus_url,
-        nexus_username=nexus_username,
-        nexus_password=nexus_password,
+        creds=creds,
         repository=repository,
         image_name=image_name,
     )
 
 
 def run_server() -> None:
-    """Run the MCP server."""
+    """Run the MCP server with HTTP transport."""
+    import os
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    logger.info("Starting Nexus MCP Server")
-    mcp.run()
+
+    host = os.environ.get("NEXUS_MCP_HOST", "0.0.0.0")
+    port = int(os.environ.get("NEXUS_MCP_PORT", "8000"))
+
+    logger.info(f"Starting Nexus MCP Server on {host}:{port}")
+    mcp.run(transport="sse", host=host, port=port)

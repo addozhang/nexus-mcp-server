@@ -1,5 +1,8 @@
 """Common test fixtures and utilities."""
 
+from collections.abc import Generator
+from unittest.mock import MagicMock, patch
+
 import pytest
 import respx
 from httpx import Response
@@ -18,7 +21,7 @@ def nexus_credentials() -> NexusCredentials:
 
 
 @pytest.fixture
-def mock_nexus() -> respx.MockRouter:
+def mock_nexus() -> Generator[respx.MockRouter, None, None]:
     """Fixture providing a mocked Nexus API.
 
     Use with respx to mock HTTP requests:
@@ -29,6 +32,53 @@ def mock_nexus() -> respx.MockRouter:
             )
     """
     with respx.mock(base_url="https://nexus.example.com") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_http_headers() -> Generator[MagicMock, None, None]:
+    """Fixture to mock HTTP request headers for credential extraction.
+
+    This patches get_http_request to return a mock request with headers.
+    """
+    mock_request = MagicMock()
+    mock_request.headers = {
+        "x-nexus-url": "https://nexus.example.com",
+        "x-nexus-username": "testuser",
+        "x-nexus-password": "testpass",
+    }
+
+    with patch(
+        "nexus_mcp.dependencies.get_http_request", return_value=mock_request
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_http_headers_missing() -> Generator[MagicMock, None, None]:
+    """Fixture to mock HTTP request with missing headers."""
+    mock_request = MagicMock()
+    mock_request.headers = {}  # No credentials
+
+    with patch(
+        "nexus_mcp.dependencies.get_http_request", return_value=mock_request
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_http_headers_invalid_url() -> Generator[MagicMock, None, None]:
+    """Fixture to mock HTTP request with invalid URL."""
+    mock_request = MagicMock()
+    mock_request.headers = {
+        "x-nexus-url": "not-a-valid-url",
+        "x-nexus-username": "testuser",
+        "x-nexus-password": "testpass",
+    }
+
+    with patch(
+        "nexus_mcp.dependencies.get_http_request", return_value=mock_request
+    ) as mock:
         yield mock
 
 
