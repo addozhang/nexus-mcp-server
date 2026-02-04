@@ -107,12 +107,22 @@ git push origin main
 4. FastMCP 文档: https://github.com/jlowin/fastmcp
 
 ## Lessons Learned
-### Transport Mode Implementation (Feb 2026)
+### Transport Mode Implementation (Feb 2026) ✅ COMPLETE
+**Status**: Implementation complete (commit 6f805d6)
+
+**Key Decisions**:
 1. **Argparse Priority**: Environment variables in argparse defaults work correctly with `os.environ.get()` - CLI args automatically override them
 2. **Testing Strategy**: Mock `mcp.run()` to verify arguments without starting actual server
 3. **Ruff Auto-fix**: Use `--unsafe-fixes` flag to auto-fix whitespace issues in existing code
 4. **Test Count**: Added 17 new tests for transport parameter parsing, bringing total from 42 to 59
 5. **Backward Compatibility**: All existing tests passed without modification - default SSE behavior preserved
+
+**Best Practices**:
+- Always use `patch("sys.argv")` and `patch.dict(os.environ)` for testing CLI args
+- Mock `mcp.run()` instead of starting actual server in unit tests
+- Test priority order: CLI > ENV > Default
+- Test invalid input rejection with `pytest.raises(SystemExit)`
+- Keep default behavior unchanged for backward compatibility
 
 ---
 
