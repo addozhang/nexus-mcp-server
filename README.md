@@ -114,13 +114,30 @@ For other MCP clients that support HTTP transport:
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `search_maven_artifact` | Search Maven repositories | `group_id`, `artifact_id`, `version`, `repository` |
-| `get_maven_versions` | Get all versions of an artifact | `group_id`, `artifact_id`, `repository` |
+| `get_maven_versions` | Get versions of an artifact (paginated) | `group_id`, `artifact_id`, `repository`, `page_size` (default 50), `continuation_token` |
+
+**Pagination example:**
+```python
+# First page
+response = get_maven_versions("com.example", "myapp")
+# response contains: versions, hasMore, continuationToken (if hasMore is true)
+
+# Next page
+if response["hasMore"]:
+    next_response = get_maven_versions(
+        "com.example", 
+        "myapp", 
+        continuation_token=response["continuationToken"]
+    )
+```
 
 ### Python Tools
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `search_python_package` | Search Python packages | `name`, `repository` |
-| `get_python_versions` | Get all versions of a package | `package_name`, `repository` |
+| `get_python_versions` | Get versions of a package (paginated) | `package_name`, `repository`, `page_size` (default 50), `continuation_token` |
+
+**Pagination:** Same pattern as Maven - check `hasMore` and use `continuationToken` for subsequent pages.
 
 ### Docker Tools
 | Tool | Description | Parameters |

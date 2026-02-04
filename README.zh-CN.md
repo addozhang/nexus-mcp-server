@@ -100,9 +100,24 @@ docker run -p 8000:8000 nexus-mcp-server
 | 工具 | 描述 | 参数 |
 |------|------|------|
 | `search_maven_artifact` | 搜索 Maven 仓库 | `group_id`, `artifact_id`, `version`, `repository` |
-| `get_maven_versions` | 获取制品的所有版本 | `group_id`, `artifact_id`, `repository` |
+| `get_maven_versions` | 获取制品的版本（分页） | `group_id`, `artifact_id`, `repository`, `page_size`（默认 50）, `continuation_token` |
 
-**示例**：
+**分页示例**：
+```python
+# 第一页
+response = get_maven_versions("com.example", "myapp")
+# response 包含：versions, hasMore, continuationToken（如果 hasMore 为 true）
+
+# 下一页
+if response["hasMore"]:
+    next_response = get_maven_versions(
+        "com.example", 
+        "myapp", 
+        continuation_token=response["continuationToken"]
+    )
+```
+
+**搜索示例**：
 ```python
 # 搜索 Spring Boot
 search_maven_artifact(
@@ -116,7 +131,9 @@ search_maven_artifact(
 | 工具 | 描述 | 参数 |
 |------|------|------|
 | `search_python_package` | 搜索 Python 包 | `name`, `repository` |
-| `get_python_versions` | 获取包的所有版本 | `package_name`, `repository` |
+| `get_python_versions` | 获取包的版本（分页） | `package_name`, `repository`, `page_size`（默认 50）, `continuation_token` |
+
+**分页说明**：与 Maven 相同 - 检查 `hasMore` 并使用 `continuationToken` 获取后续页面。
 
 **示例**：
 ```python

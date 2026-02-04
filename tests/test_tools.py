@@ -93,6 +93,74 @@ class TestMavenTools:
         assert result["groupId"] == "com.example"
         assert result["artifactId"] == "artifact"
         assert result["count"] == 2
+        assert result["hasMore"] is False
+        assert "continuationToken" not in result
+
+    @respx.mock
+    async def test_get_maven_versions_with_pagination(self) -> None:
+        """Get versions should support pagination with continuation token."""
+        # First page with continuation token
+        page1_response = {
+            "items": [
+                {
+                    "id": "1",
+                    "repository": "maven-releases",
+                    "format": "maven2",
+                    "group": "com.example",
+                    "name": "artifact",
+                    "version": "1.0.0",
+                    "assets": [],
+                }
+            ],
+            "continuationToken": "page2token",
+        }
+
+        # Second page without continuation token
+        page2_response = {
+            "items": [
+                {
+                    "id": "2",
+                    "repository": "maven-releases",
+                    "format": "maven2",
+                    "group": "com.example",
+                    "name": "artifact",
+                    "version": "2.0.0",
+                    "assets": [],
+                }
+            ],
+        }
+
+        route = respx.get("https://nexus.example.com/service/rest/v1/search")
+        route.side_effect = [
+            Response(200, json=page1_response),
+            Response(200, json=page2_response),
+        ]
+
+        # First page
+        result1 = await get_maven_versions_impl(
+            creds=make_creds(),
+            group_id="com.example",
+            artifact_id="artifact",
+        )
+
+        assert "error" not in result1
+        assert result1["count"] == 1
+        assert result1["hasMore"] is True
+        assert result1["continuationToken"] == "page2token"
+        assert result1["versions"][0]["version"] == "1.0.0"
+
+        # Second page
+        result2 = await get_maven_versions_impl(
+            creds=make_creds(),
+            group_id="com.example",
+            artifact_id="artifact",
+            continuation_token="page2token",
+        )
+
+        assert "error" not in result2
+        assert result2["count"] == 1
+        assert result2["hasMore"] is False
+        assert result2["versions"][0]["version"] == "2.0.0"
 
 
 class TestPythonTools:
@@ -148,6 +216,61 @@ class TestPythonTools:
         assert "error" not in result
         assert result["packageName"] == "requests"
         assert result["count"] == 1
+        assert result["hasMore"] is False
+
+    @respx.mock
+    async def test_get_python_versions_with_pagination(self) -> None:
+        """Get Python versions should support pagination."""
+        page1_response = {
+            "items": [
+                {
+                    "id": "1",
+                    "repository": "pypi-hosted",
+                    "format": "pypi",
+                    "name": "requests",
+                    "version": "2.28.0",
+                    "assets": [],
+                }
+            ],
+            "continuationToken": "next_page",
+        }
+
+        page2_response = {
+            "items": [
+                {
+                    "id": "2",
+                    "repository": "pypi-hosted",
+                    "format": "pypi",
+                    "name": "requests",
+                    "version": "2.29.0",
+                    "assets": [],
+                }
+            ],
+        }
+
+        route = respx.get("https://nexus.example.com/service/rest/v1/search")
+        route.side_effect = [
+            Response(200, json=page1_response),
+            Response(200, json=page2_response),
+        ]
+
+        # First page
+        result1 = await get_python_versions_impl(
+            creds=make_creds(),
+            package_name="requests",
+        )
+
+        assert result1["hasMore"] is True
+        assert result1["continuationToken"] == "next_page"
+
+        # Second page
+        result2 = await get_python_versions_impl(
+            creds=make_creds(),
+            package_name="requests",
+            continuation_token="next_page",
+        )
+
+        assert result2["hasMore"] is False
 
 
 class TestDockerTools:

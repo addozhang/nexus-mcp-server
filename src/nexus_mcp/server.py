@@ -140,11 +140,24 @@ async def get_maven_versions(
         str | None,
         Field(description="Repository name to search in (searches all if not specified)"),
     ] = None,
+    page_size: Annotated[
+        int,
+        Field(description="Number of versions per page (default 50)", ge=1, le=1000),
+    ] = 50,
+    continuation_token: Annotated[
+        str | None,
+        Field(description="Continuation token from previous response for pagination"),
+    ] = None,
 ) -> dict[str, Any]:
-    """Get all versions of a specific Maven artifact.
+    """Get versions of a specific Maven artifact with pagination.
 
-    Returns a list of all available versions for the specified groupId:artifactId,
-    sorted from newest to oldest.
+    Returns a paginated list of available versions for the specified groupId:artifactId.
+    Use continuation_token to fetch subsequent pages.
+
+    Response includes:
+    - versions: List of versions in this page
+    - hasMore: Whether there are more pages
+    - continuationToken: Token to fetch next page (if hasMore is true)
 
     Requires authentication via HTTP headers:
     - X-Nexus-Url: Nexus instance URL
@@ -161,6 +174,8 @@ async def get_maven_versions(
         group_id=group_id,
         artifact_id=artifact_id,
         repository=repository,
+        page_size=page_size,
+        continuation_token=continuation_token,
     )
 
 
@@ -212,11 +227,24 @@ async def get_python_versions(
         str | None,
         Field(description="Repository name to search in (searches all if not specified)"),
     ] = None,
+    page_size: Annotated[
+        int,
+        Field(description="Number of versions per page (default 50)", ge=1, le=1000),
+    ] = 50,
+    continuation_token: Annotated[
+        str | None,
+        Field(description="Continuation token from previous response for pagination"),
+    ] = None,
 ) -> dict[str, Any]:
-    """Get all versions of a specific Python package.
+    """Get versions of a specific Python package with pagination.
 
-    Returns all available versions of the package with format information
+    Returns paginated versions of the package with format information
     (wheel, sdist, etc.) and download URLs.
+
+    Response includes:
+    - versions: List of versions in this page
+    - hasMore: Whether there are more pages
+    - continuationToken: Token to fetch next page (if hasMore is true)
 
     Requires authentication via HTTP headers:
     - X-Nexus-Url: Nexus instance URL
@@ -232,6 +260,8 @@ async def get_python_versions(
         creds=creds,
         package_name=package_name,
         repository=repository,
+        page_size=page_size,
+        continuation_token=continuation_token,
     )
 
 

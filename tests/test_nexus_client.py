@@ -124,7 +124,7 @@ class TestNexusClientSearch:
             username="user",
             password="pass",
         )
-        
+
         respx.get("https://nexus.example.com:8081/nexus/service/rest/v1/search").mock(
             return_value=Response(200, json=SAMPLE_MAVEN_SEARCH_RESPONSE)
         )

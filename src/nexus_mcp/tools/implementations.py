@@ -97,24 +97,36 @@ async def get_maven_versions_impl(
     group_id: str,
     artifact_id: str,
     repository: str | None = None,
+    page_size: int = 50,
+    continuation_token: str | None = None,
 ) -> dict[str, Any]:
-    """Get all versions of a specific Maven artifact.
+    """Get versions of a specific Maven artifact with pagination.
 
-    Returns a list of all available versions for the specified groupId:artifactId,
-    sorted from newest to oldest.
+    Returns a paginated list of available versions for the specified groupId:artifactId.
+    Use continuation_token to fetch subsequent pages.
+
+    Args:
+        group_id: Maven group ID
+        artifact_id: Maven artifact ID
+        repository: Optional repository name
+        page_size: Number of versions per page (default 50)
+        continuation_token: Token for next page (from previous response)
     """
     try:
         client = _create_client(creds)
-        results = await client.search_all(
+
+        # Fetch one page from Nexus API
+        response = await client.search(
             repository=repository,
             format="maven2",
             group=group_id,
             name=artifact_id,
+            continuation_token=continuation_token,
         )
 
-        # Extract unique versions and sort them
+        # Extract unique versions from this page
         versions_with_assets: dict[str, dict[str, Any]] = {}
-        for r in results:
+        for r in response.items:
             if r.version not in versions_with_assets:
                 versions_with_assets[r.version] = {
                     "version": r.version,
@@ -130,12 +142,21 @@ async def get_maven_versions_impl(
             versions_with_assets.values(), key=lambda x: str(x["version"]), reverse=True
         )
 
-        return {
+        result: dict[str, Any] = {
             "groupId": group_id,
             "artifactId": artifact_id,
             "count": len(sorted_versions),
             "versions": sorted_versions,
         }
+
+        # Include continuation token if there are more results
+        if response.continuation_token:
+            result["continuationToken"] = response.continuation_token
+            result["hasMore"] = True
+        else:
+            result["hasMore"] = False
+
+        return result
 
     except NexusError as e:
         return {"error": _handle_nexus_error(e)}
@@ -195,40 +216,53 @@ async def get_python_versions_impl(
     creds: NexusCredentials,
     package_name: str,
     repository: str | None = None,
+    page_size: int = 50,
+    continuation_token: str | None = None,
 ) -> dict[str, Any]:
-    """Get all versions of a specific Python package.
+    """Get versions of a specific Python package with pagination.
 
-    Returns all available versions of the package with format information
+    Returns paginated versions of the package with format information
     (wheel, sdist, etc.) and download URLs.
+
+    Args:
+        package_name: Python package name
+        repository: Optional repository name
+        page_size: Number of versions per page (default 50)
+        continuation_token: Token for next page (from previous response)
     """
     try:
         client = _create_client(creds)
 
         # Search with original name
-        results = await client.search_all(
+        response = await client.search(
             repository=repository,
             format="pypi",
             name=package_name,
+            continuation_token=continuation_token,
         )
 
-        # Also try normalized name
-        normalized = (
-            package_name.replace("-", "_")
-            if "-" in package_name
-            else package_name.replace("_", "-")
-        )
-        if normalized != package_name:
-            additional = await client.search_all(
-                repository=repository,
-                format="pypi",
-                name=normalized,
+        # Also try normalized name if no continuation token (first page only)
+        if not continuation_token:
+            normalized = (
+                package_name.replace("-", "_")
+                if "-" in package_name
+                else package_name.replace("_", "-")
             )
-            seen_ids = {r.id for r in results}
-            results.extend(r for r in additional if r.id not in seen_ids)
+            if normalized != package_name:
+                additional_response = await client.search(
+                    repository=repository,
+                    format="pypi",
+                    name=normalized,
+                )
+                # Merge results
+                seen_ids = {r.id for r in response.items}
+                response.items.extend(
+                    r for r in additional_response.items if r.id not in seen_ids
+                )
 
         # Group by version
         versions_data: dict[str, dict[str, Any]] = {}
-        for r in results:
+        for r in response.items:
             if r.version not in versions_data:
                 versions_data[r.version] = {
                     "version": r.version,
@@ -250,11 +284,20 @@ async def get_python_versions_impl(
             versions_data.values(), key=lambda x: str(x["version"]), reverse=True
         )
 
-        return {
+        result: dict[str, Any] = {
             "packageName": package_name,
             "count": len(sorted_versions),
             "versions": sorted_versions,
         }
+
+        # Include continuation token if there are more results
+        if response.continuation_token:
+            result["continuationToken"] = response.continuation_token
+            result["hasMore"] = True
+        else:
+            result["hasMore"] = False
+
+        return result
 
     except NexusError as e:
         return {"error": _handle_nexus_error(e)}
