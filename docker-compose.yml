@@ -9,6 +9,7 @@ services:
     environment:
       - NEXUS_MCP_HOST=0.0.0.0
       - NEXUS_MCP_PORT=8000
+      - NEXUS_MCP_TRANSPORT=streamable-http
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
