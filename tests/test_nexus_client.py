@@ -76,6 +76,16 @@ class TestNexusClient:
         client = NexusClient(creds)
         assert client._base_url == "https://nexus.example.com"
 
+    def test_client_preserves_url_path(self) -> None:
+        """Client should preserve path in URL (e.g., /nexus)."""
+        creds = NexusCredentials(
+            url="https://nexus.example.com:8081/nexus",
+            username="user",
+            password="pass",
+        )
+        client = NexusClient(creds)
+        assert client._base_url == "https://nexus.example.com:8081/nexus"
+
     def test_client_creation_with_invalid_url(self) -> None:
         """Client should reject invalid URL."""
         creds = NexusCredentials(
@@ -105,6 +115,25 @@ class TestNexusClientSearch:
         assert result.items[0].name == "artifact"
         assert result.items[0].version == "1.0.0"
         assert result.continuation_token is None
+
+    @respx.mock
+    async def test_search_with_url_path(self) -> None:
+        """Search should work correctly with URL containing path (e.g., /nexus)."""
+        creds = NexusCredentials(
+            url="https://nexus.example.com:8081/nexus",
+            username="user",
+            password="pass",
+        )
+        
+        respx.get("https://nexus.example.com:8081/nexus/service/rest/v1/search").mock(
+            return_value=Response(200, json=SAMPLE_MAVEN_SEARCH_RESPONSE)
+        )
+
+        client = NexusClient(creds)
+        result = await client.search(group="com.example", name="artifact")
+
+        assert len(result.items) == 2
+        assert result.items[0].group == "com.example"
 
     @respx.mock
     async def test_search_with_pagination(

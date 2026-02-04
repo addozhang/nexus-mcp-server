@@ -2,7 +2,7 @@
 
 import logging
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import httpx
 from pydantic import BaseModel, Field
@@ -116,7 +116,7 @@ class NexusClient:
             NexusConnectionError: If connection fails
             NexusError: For other API errors
         """
-        url = urljoin(self._base_url, f"{self.API_BASE}{endpoint}")
+        url = f"{self._base_url}{self.API_BASE}{endpoint}"
 
         # Filter out None values from params
         if params:
