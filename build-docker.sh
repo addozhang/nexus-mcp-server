@@ -6,6 +6,7 @@ set -e
 # Configuration
 IMAGE_NAME="${IMAGE_NAME:-addozhang/nexus-mcp-server}"
 VERSION="${VERSION:-latest}"
+PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
 PLATFORMS="linux/amd64,linux/arm64"
 
 # Colors for output
@@ -16,6 +17,7 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}Building Nexus MCP Server Docker image${NC}"
 echo -e "${BLUE}Image: ${IMAGE_NAME}:${VERSION}${NC}"
+echo -e "${BLUE}Python version: ${PYTHON_VERSION}${NC}"
 echo -e "${BLUE}Platforms: ${PLATFORMS}${NC}"
 echo ""
 
@@ -42,6 +44,7 @@ docker buildx inspect --bootstrap
 echo -e "${BLUE}Building multi-architecture image...${NC}"
 docker buildx build \
     --platform "$PLATFORMS" \
+    --build-arg PYTHON_VERSION="$PYTHON_VERSION" \
     --tag "${IMAGE_NAME}:${VERSION}" \
     --tag "${IMAGE_NAME}:latest" \
     --push \
@@ -51,6 +54,7 @@ echo ""
 echo -e "${GREEN}✅ Build completed successfully!${NC}"
 echo -e "${GREEN}Image pushed: ${IMAGE_NAME}:${VERSION}${NC}"
 echo -e "${GREEN}Image pushed: ${IMAGE_NAME}:latest${NC}"
+echo -e "${GREEN}Python version: ${PYTHON_VERSION}${NC}"
 echo ""
 echo -e "${BLUE}To run the image:${NC}"
 echo "  docker run -p 8000:8000 ${IMAGE_NAME}:${VERSION}"

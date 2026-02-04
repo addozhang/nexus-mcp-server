@@ -1,5 +1,6 @@
 # Dockerfile for Nexus MCP Server
-FROM python:3.11-slim
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim
 
 WORKDIR /app
 

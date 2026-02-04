@@ -42,6 +42,26 @@ Builds a single-architecture image for local testing:
 - Fast build
 - Tagged as `nexus-mcp-server:latest` and `nexus-mcp-server:dev`
 
+**Environment variables:**
+- `IMAGE_NAME`: Docker image name (default: `nexus-mcp-server`)
+- `VERSION`: Image tag (default: `dev`)
+- `PYTHON_VERSION`: Python base image version (default: `3.11`)
+
+**Example:**
+```bash
+# Build with default Python 3.11
+./build-local.sh
+
+# Build with Python 3.12
+export PYTHON_VERSION=3.12
+./build-local.sh
+
+# Build with custom image name
+export IMAGE_NAME=my-nexus-mcp
+export VERSION=test
+./build-local.sh
+```
+
 ### `build-docker.sh`
 Builds multi-architecture images and pushes to Docker Hub:
 - Supports: `linux/amd64`, `linux/arm64`
@@ -51,11 +71,19 @@ Builds multi-architecture images and pushes to Docker Hub:
 **Environment variables:**
 - `IMAGE_NAME`: Docker image name (default: `addozhang/nexus-mcp-server`)
 - `VERSION`: Image tag (default: `latest`)
+- `PYTHON_VERSION`: Python base image version (default: `3.11`)
 
 **Example:**
 ```bash
+# Build with default Python 3.11
 export IMAGE_NAME=myorg/nexus-mcp-server
 export VERSION=1.2.3
+./build-docker.sh
+
+# Build with Python 3.12
+export IMAGE_NAME=myorg/nexus-mcp-server
+export VERSION=1.2.3
+export PYTHON_VERSION=3.12
 ./build-docker.sh
 ```
 
