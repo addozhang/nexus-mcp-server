@@ -23,6 +23,7 @@ EXPOSE 8000
 # Environment variables for configuration
 ENV NEXUS_MCP_HOST=0.0.0.0
 ENV NEXUS_MCP_PORT=8000
+ENV NEXUS_MCP_TRANSPORT=sse
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

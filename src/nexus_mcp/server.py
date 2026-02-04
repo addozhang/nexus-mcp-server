@@ -104,9 +104,9 @@ async def search_maven_artifact(
 ) -> dict[str, Any]:
     """Search for Maven artifacts by group ID, artifact ID, or version.
 
-    Searches across all Maven repositories (or a specific one) and returns 
+    Searches across all Maven repositories (or a specific one) and returns
     matching artifacts with their available versions and download URLs.
-    
+
     At least one of group_id or artifact_id must be provided.
     """
     try:
@@ -189,10 +189,10 @@ async def search_python_package(
 ) -> dict[str, Any]:
     """Search for Python/PyPI packages by name.
 
-    Searches PyPI-format repositories and automatically handles Python's 
-    naming conventions (converts between hyphens and underscores, e.g., 
+    Searches PyPI-format repositories and automatically handles Python's
+    naming conventions (converts between hyphens and underscores, e.g.,
     'my-package' vs 'my_package').
-    
+
     Returns matching packages with their versions and download URLs.
     """
     try:
@@ -308,6 +308,7 @@ async def get_docker_tags(
 
 def run_server() -> None:
     """Run the MCP server with HTTP transport."""
+    import argparse
     import os
 
     logging.basicConfig(
@@ -315,8 +316,31 @@ def run_server() -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    host = os.environ.get("NEXUS_MCP_HOST", "0.0.0.0")
-    port = int(os.environ.get("NEXUS_MCP_PORT", "8000"))
+    # Add argument parser
+    parser = argparse.ArgumentParser(
+        description="Nexus MCP Server - Query Sonatype Nexus Repository Manager"
+    )
+    parser.add_argument(
+        "--transport",
+        choices=["sse", "streamable-http"],
+        default=os.environ.get("NEXUS_MCP_TRANSPORT", "sse"),
+        help="Transport mode: sse or streamable-http (default: sse, env: NEXUS_MCP_TRANSPORT)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("NEXUS_MCP_PORT", "8000")),
+        help="Port to listen on (default: 8000, env: NEXUS_MCP_PORT)",
+    )
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("NEXUS_MCP_HOST", "0.0.0.0"),
+        help="Host to bind to (default: 0.0.0.0, env: NEXUS_MCP_HOST)",
+    )
 
-    logger.info(f"Starting Nexus MCP Server on {host}:{port}")
-    mcp.run(transport="sse", host=host, port=port)
+    args = parser.parse_args()
+
+    logger.info(
+        f"Starting Nexus MCP Server on {args.host}:{args.port} (transport={args.transport})"
+    )
+    mcp.run(transport=args.transport, host=args.host, port=args.port)

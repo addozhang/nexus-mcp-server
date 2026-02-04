@@ -1,119 +1,119 @@
-# Agent Operational Guide
+# Nexus MCP Server - Agent Operational Guide
 
-## Project: Nexus MCP Server
+## Project Overview
+Python FastMCP 实现的 Sonatype Nexus Repository MCP 服务器。
 
-### Build & Test Commands (Backpressure)
+## Current State
+- Transport: HTTP SSE (default) or Streamable-HTTP
+- Tests: 59/59 passing (17 new transport tests added)
+- Code Quality: mypy + ruff all passing
+- Docker: Multi-arch support (amd64 + arm64)
 
-**Setup**:
+## Backpressure Commands (必须每次运行)
+
+### 运行测试
 ```bash
-python -m venv venv
-source venv/bin/activate  # or venv/bin/activate.fish
-pip install -e ".[dev]"
-```
-
-**Run tests**:
-```bash
+# 所有测试
 pytest tests/ -v
+
+# 带覆盖率
+pytest tests/ -v --cov=nexus_mcp_server --cov-report=term-missing
+
+# 特定测试
+pytest tests/test_server.py::test_transport_selection -v
 ```
 
-**Type checking**:
+### 类型检查
 ```bash
-mypy src/
+mypy src/nexus_mcp_server --strict
 ```
 
-**Linting**:
+### 代码风格检查
 ```bash
+# 检查
 ruff check src/ tests/
+
+# 自动修复
+ruff check --fix src/ tests/
 ```
 
-**Run server locally** (HTTP transport on port 8000):
+### 完整验证（提交前必须）
 ```bash
-python -m nexus_mcp
-
-# Or with custom host/port:
-NEXUS_MCP_HOST=127.0.0.1 NEXUS_MCP_PORT=9000 python -m nexus_mcp
+pytest tests/ -v && mypy src/ --strict && ruff check src/ tests/
 ```
 
-**Test server with curl**:
-```bash
-curl http://localhost:8000/health
-```
-
-### Project Structure
+## Project Structure
 ```
 nexus-mcp-server/
-├── src/nexus_mcp/
-│   ├── __init__.py          # Version and main() entry point
-│   ├── __main__.py          # CLI runner: python -m nexus_mcp
-│   ├── server.py            # FastMCP server with @mcp.tool decorators
-│   ├── nexus_client.py      # Async httpx client for Nexus REST API
-│   ├── auth.py              # NexusConnectionParams type definitions
-│   ├── dependencies.py      # Header extraction for credentials
-│   └── tools/
-│       ├── __init__.py      # Re-exports implementations
-│       └── implementations.py  # Testable tool functions (*_impl)
+├── src/nexus_mcp_server/
+│   ├── __init__.py
+│   ├── __main__.py      # 启动入口
+│   ├── server.py        # MCP 服务器逻辑
+│   └── nexus_client.py  # Nexus API 客户端
 ├── tests/
-│   ├── conftest.py          # Fixtures and sample data
-│   ├── test_nexus_client.py # Client unit tests
-│   ├── test_tools.py        # Tool integration tests
-│   └── test_http_transport.py # HTTP transport tests
-├── specs/                   # Requirement specifications
-├── pyproject.toml
-├── README.md
-└── Dockerfile               # For containerized deployment
+│   ├── test_server.py
+│   ├── test_nexus_client.py
+│   └── conftest.py      # pytest fixtures
+├── specs/               # 功能规格
+├── Dockerfile
+├── pyproject.toml       # 依赖和配置
+└── README.md
 ```
 
-### Dependencies
-- `fastmcp` - MCP server framework (with HTTP SSE transport)
-- `httpx` - HTTP client for Nexus API
-- `pydantic` - Data validation
-- `pytest` - Testing
-- `mypy` - Type checking
-- `ruff` - Linting
+## Common Operations
 
-### Operational Learnings
+### 本地开发运行
+```bash
+# SSE 模式（默认）
+python -m nexus_mcp_server
 
-#### FastMCP Framework
-- FastMCP's `@mcp.tool` decorator wraps functions into `FunctionTool` objects, making them non-callable directly
-- For testability, separate tool implementation functions (`*_impl`) from MCP decorators
-- Import implementations in `server.py` and wrap them with `@mcp.tool`
+# Streamable-HTTP 模式
+python -m nexus_mcp_server --transport streamable-http
 
-#### HTTP Transport & Authentication
-- Server uses HTTP SSE transport: `mcp.run(transport="sse", host="0.0.0.0", port=8000)`
-- Credentials passed via HTTP headers: `X-Nexus-Url`, `X-Nexus-Username`, `X-Nexus-Password`
-- Use `get_http_request()` from `fastmcp.server.dependencies` to access request headers
-- Headers are case-insensitive (Starlette normalizes to lowercase)
-- Credentials extracted via `dependencies.py:get_nexus_credentials()`
-
-#### Credential Extraction Pattern
-```python
-from fastmcp.server.dependencies import get_http_request
-
-def get_nexus_credentials() -> NexusCredentials:
-    request = get_http_request()
-    headers = request.headers if request else {}
-    nexus_url = headers.get("x-nexus-url")
-    # ... validate and return NexusCredentials
+# 自定义端口
+python -m nexus_mcp_server --port 9000
 ```
 
-#### Nexus API Quirks
-- Search API uses `format` parameter for repository type filtering (maven2, pypi, docker)
-- Maven coordinates: use `maven.groupId`, `maven.artifactId`, `maven.version` params
-- Python packages: may need to normalize names (hyphen vs underscore)
-- Pagination uses `continuationToken` in response, pass back as query param
+### Docker 运行
+```bash
+# 构建
+docker build -t nexus-mcp-server .
 
-#### Testing with respx
-- Use `httpx.ConnectError` (not generic `Exception`) for connection error mocking
-- Import sorting: `httpx` before `respx` when both needed
-- `respx.mock` decorator handles async test functions automatically
+# 运行 SSE
+docker run -p 8000:8000 nexus-mcp-server
 
-#### Testing HTTP Headers
-- Mock `get_http_request()` to test credential extraction
-- Use `unittest.mock.patch` to inject mock request with headers
-- Test fixtures in `conftest.py`: `mock_http_headers`, `mock_http_headers_missing`
+# 运行 Streamable-HTTP
+docker run -e NEXUS_MCP_TRANSPORT=streamable-http -p 8000:8000 nexus-mcp-server
+```
 
-#### Migration Notes (stdio -> HTTP)
-- Removed credential parameters from tool signatures
-- Tools now call `get_nexus_credentials()` internally
-- Tests use `NexusCredentials` object instead of individual params
-- Old type aliases (`NexusUrl`, `NexusUsername`, `NexusPassword`) removed from auth.py
+## Git Workflow
+```bash
+# 提交前检查
+git status
+git diff
+
+# 提交（清晰的 message）
+git add <files>
+git commit -m "feat: add streamable-http transport support"
+
+# 推送
+git push origin main
+```
+
+## Debugging Tips
+1. 使用 `pytest -vv` 查看详细输出
+2. 使用 `pytest --pdb` 在失败时进入调试器
+3. 检查 `pyproject.toml` 的依赖版本
+4. FastMCP 文档: https://github.com/jlowin/fastmcp
+
+## Lessons Learned
+### Transport Mode Implementation (Feb 2026)
+1. **Argparse Priority**: Environment variables in argparse defaults work correctly with `os.environ.get()` - CLI args automatically override them
+2. **Testing Strategy**: Mock `mcp.run()` to verify arguments without starting actual server
+3. **Ruff Auto-fix**: Use `--unsafe-fixes` flag to auto-fix whitespace issues in existing code
+4. **Test Count**: Added 17 new tests for transport parameter parsing, bringing total from 42 to 59
+5. **Backward Compatibility**: All existing tests passed without modification - default SSE behavior preserved
+
+---
+
+**Note**: 每次实施任务后，更新本文件记录新的经验和注意事项。

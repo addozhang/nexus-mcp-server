@@ -5,6 +5,7 @@
 适用于 Sonatype Nexus Repository Manager 3（OSS 和 Pro 版本）的 MCP (Model Context Protocol) 服务器，让 AI 助手能够查询 Maven、Python (PyPI) 和 Docker 仓库。
 
 ## 功能特性
+- 🚀 **多种传输模式** - SSE（默认）或 streamable-http 传输
 - 🌐 **HTTP 流式传输** - 基于 SSE 的现代化传输，支持 HTTP 头认证
 - 🔐 **按请求认证** - 凭证通过 HTTP 头传递（无需硬编码密钥）
 - 📦 **Maven 支持** - 搜索制品、列出版本、获取元数据
@@ -79,12 +80,55 @@ docker-compose up
 ## 配置
 
 ### 服务器配置
-服务器可通过环境变量进行配置：
+服务器可通过命令行参数或环境变量进行配置：
 
-| 变量 | 描述 | 默认值 |
-|------|------|--------|
-| `NEXUS_MCP_HOST` | 绑定的主机地址 | `0.0.0.0` |
-| `NEXUS_MCP_PORT` | 监听端口 | `8000` |
+| 变量 | 命令行参数 | 描述 | 默认值 |
+|------|-----------|------|--------|
+| `NEXUS_MCP_HOST` | `--host` | 绑定的主机地址 | `0.0.0.0` |
+| `NEXUS_MCP_PORT` | `--port` | 监听端口 | `8000` |
+| `NEXUS_MCP_TRANSPORT` | `--transport` | 传输模式（`sse` 或 `streamable-http`）| `sse` |
+
+**优先级：** 命令行参数 > 环境变量 > 默认值
+
+**传输模式：**
+- `sse`（默认）- Server-Sent Events 传输，兼容大多数 MCP 客户端
+- `streamable-http` - Streamable HTTP 传输，适用于偏好此协议的客户端
+
+### 运行服务器
+
+#### 本地开发
+```bash
+# SSE 模式（默认）
+python -m nexus_mcp
+
+# Streamable-HTTP 模式
+python -m nexus_mcp --transport streamable-http
+
+# 自定义端口
+python -m nexus_mcp --port 9000
+
+# 自定义主机和端口
+python -m nexus_mcp --host 127.0.0.1 --port 9000
+```
+
+#### 使用 Docker
+```bash
+# SSE 模式（默认）
+docker run -p 8000:8000 addozhang/nexus-mcp-server:latest
+
+# Streamable-HTTP 模式
+docker run -e NEXUS_MCP_TRANSPORT=streamable-http -p 8000:8000 addozhang/nexus-mcp-server:latest
+
+# 自定义端口
+docker run -e NEXUS_MCP_PORT=9000 -p 9000:9000 addozhang/nexus-mcp-server:latest
+
+# 或使用 docker-compose
+docker-compose up
+
+# 详细部署指南请参阅 DOCKER.md
+```
+
+详细部署指南请参阅 [DOCKER.md](DOCKER.md)。
 
 ### 通过 HTTP 头认证
 凭证通过每个请求的 HTTP 头传递：
@@ -271,6 +315,17 @@ nexus-mcp-server/
 - 验证仓库名称正确
 - 检查包/制品在 Nexus 中是否存在
 - 对于 Python 包，尝试使用连字符和下划线两种命名方式
+
+### 传输模式问题
+**使用 streamable-http 时连接超时：**
+- 确保客户端支持 streamable-http 传输
+- 尝试改用 SSE 模式：`python -m nexus_mcp --transport sse`
+- 检查防火墙规则是否允许 HTTP 连接
+
+**工具未显示：**
+- SSE 和 streamable-http 两种模式暴露相同的工具
+- 验证是否正确传递了头（X-Nexus-*）
+- 检查服务器日志中的认证错误
 
 ## 技术栈
 - **Python 3.10+** - 现代 Python 特性

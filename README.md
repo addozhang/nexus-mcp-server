@@ -7,6 +7,7 @@ English | [简体中文](README.zh-CN.md)
 MCP (Model Context Protocol) server for Sonatype Nexus Repository Manager 3 (OSS and Pro), enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
 
 ## Features
+- **Multiple transport modes** - SSE (default) or streamable-http transport
 - **HTTP streaming transport** - Modern SSE-based transport with header authentication
 - **Per-request authentication** - Credentials passed via HTTP headers (no hardcoded secrets)
 - **Maven support** - Search artifacts, list versions, get metadata
@@ -81,12 +82,55 @@ For detailed deployment guide, see [DOCKER.md](DOCKER.md).
 ## Configuration
 
 ### Server Configuration
-The server can be configured using environment variables:
+The server can be configured using command line arguments or environment variables:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXUS_MCP_HOST` | Host to bind to | `0.0.0.0` |
-| `NEXUS_MCP_PORT` | Port to listen on | `8000` |
+| Variable | CLI Argument | Description | Default |
+|----------|--------------|-------------|---------|
+| `NEXUS_MCP_HOST` | `--host` | Host to bind to | `0.0.0.0` |
+| `NEXUS_MCP_PORT` | `--port` | Port to listen on | `8000` |
+| `NEXUS_MCP_TRANSPORT` | `--transport` | Transport mode (`sse` or `streamable-http`) | `sse` |
+
+**Priority:** CLI arguments > Environment variables > Default values
+
+**Transport Modes:**
+- `sse` (default) - Server-Sent Events transport, compatible with most MCP clients
+- `streamable-http` - Streamable HTTP transport for clients that prefer this protocol
+
+### Running the Server
+
+#### Local Development
+```bash
+# SSE mode (default)
+python -m nexus_mcp
+
+# Streamable-HTTP mode
+python -m nexus_mcp --transport streamable-http
+
+# Custom port
+python -m nexus_mcp --port 9000
+
+# Custom host and port
+python -m nexus_mcp --host 127.0.0.1 --port 9000
+```
+
+#### Using Docker
+```bash
+# SSE mode (default)
+docker run -p 8000:8000 addozhang/nexus-mcp-server:latest
+
+# Streamable-HTTP mode
+docker run -e NEXUS_MCP_TRANSPORT=streamable-http -p 8000:8000 addozhang/nexus-mcp-server:latest
+
+# Custom port
+docker run -e NEXUS_MCP_PORT=9000 -p 9000:9000 addozhang/nexus-mcp-server:latest
+
+# Or use docker-compose
+docker-compose up
+
+# See DOCKER.md for detailed deployment guide
+```
+
+For detailed deployment guide, see [DOCKER.md](DOCKER.md).
 
 ### Authentication via HTTP Headers
 Credentials are passed as HTTP headers with each request:
@@ -255,6 +299,17 @@ nexus-mcp-server/
 - Verify the repository name is correct
 - Check that the package/artifact exists in Nexus
 - For Python packages, try both hyphen and underscore naming
+
+### Transport Mode Issues
+**Connection timeout with streamable-http:**
+- Ensure your client supports streamable-http transport
+- Try using SSE mode instead: `python -m nexus_mcp --transport sse`
+- Check firewall rules allow HTTP connections
+
+**Tools not appearing:**
+- Both SSE and streamable-http expose the same tools
+- Verify headers are correctly passed (X-Nexus-*)
+- Check server logs for authentication errors
 
 ## License
 MIT
