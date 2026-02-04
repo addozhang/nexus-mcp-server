@@ -50,11 +50,14 @@ docker run -p 8000:8000 nexus-mcp-server
 ### 通过 HTTP 头认证
 凭证通过每个请求的 HTTP 头传递：
 
-| 头 | 描述 | 示例 |
-|------|------|------|
-| `X-Nexus-Url` | Nexus 实例 URL | `https://nexus.company.com` |
-| `X-Nexus-Username` | 用户名 | `admin` |
-| `X-Nexus-Password` | 密码 | `secret123` |
+| 头 | 描述 | 示例 | 必需 |
+|------|------|------|------|
+| `X-Nexus-Url` | Nexus 实例 URL | `https://nexus.company.com` | 是 |
+| `X-Nexus-Username` | 用户名 | `admin` | 是 |
+| `X-Nexus-Password` | 密码 | `secret123` | 是 |
+| `X-Nexus-Verify-SSL` | 验证 SSL 证书 | `false` | 否（默认：`true`）|
+
+**注意**：连接使用自签名证书的自托管 Nexus 实例时，设置 `X-Nexus-Verify-SSL: false`。
 
 ### MCP 客户端配置（Claude Desktop）
 添加到 Claude Desktop 配置文件 (`~/.config/claude/claude_desktop_config.json`)：
@@ -68,6 +71,23 @@ docker run -p 8000:8000 nexus-mcp-server
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",
         "X-Nexus-Password": "secret123"
+      }
+    }
+  }
+}
+```
+
+对于自签名证书：
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "url": "http://localhost:8000/sse",
+      "headers": {
+        "X-Nexus-Url": "https://nexus.company.com",
+        "X-Nexus-Username": "admin",
+        "X-Nexus-Password": "secret123",
+        "X-Nexus-Verify-SSL": "false"
       }
     }
   }

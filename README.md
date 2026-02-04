@@ -50,11 +50,14 @@ The server can be configured using environment variables:
 ### Authentication via HTTP Headers
 Credentials are passed as HTTP headers with each request:
 
-| Header | Description | Example |
-|--------|-------------|---------|
-| `X-Nexus-Url` | Nexus instance URL | `https://nexus.company.com` |
-| `X-Nexus-Username` | Username | `admin` |
-| `X-Nexus-Password` | Password | `secret123` |
+| Header | Description | Example | Required |
+|--------|-------------|---------|----------|
+| `X-Nexus-Url` | Nexus instance URL | `https://nexus.company.com` | Yes |
+| `X-Nexus-Username` | Username | `admin` | Yes |
+| `X-Nexus-Password` | Password | `secret123` | Yes |
+| `X-Nexus-Verify-SSL` | Verify SSL certificates | `false` | No (default: `true`) |
+
+**Note**: Set `X-Nexus-Verify-SSL: false` when connecting to self-hosted Nexus instances with self-signed certificates.
 
 ### MCP Client Configuration (Claude Desktop)
 Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json`):
@@ -68,6 +71,23 @@ Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_confi
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",
         "X-Nexus-Password": "secret123"
+      }
+    }
+  }
+}
+```
+
+For self-signed certificates:
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "url": "http://localhost:8000/sse",
+      "headers": {
+        "X-Nexus-Url": "https://nexus.company.com",
+        "X-Nexus-Username": "admin",
+        "X-Nexus-Password": "secret123",
+        "X-Nexus-Verify-SSL": "false"
       }
     }
   }

@@ -23,6 +23,10 @@ class NexusConnectionParams(BaseModel):
         ...,
         description="Password for Nexus authentication",
     )
+    verify_ssl: bool = Field(
+        default=True,
+        description="Verify SSL certificates (set to False for self-signed certs)",
+    )
 
     def to_credentials(self) -> NexusCredentials:
         """Convert to NexusCredentials for the client."""
@@ -30,6 +34,7 @@ class NexusConnectionParams(BaseModel):
             url=self.nexus_url,
             username=self.nexus_username,
             password=self.nexus_password,
+            verify_ssl=self.verify_ssl,
         )
 
     def create_client(self) -> NexusClient:

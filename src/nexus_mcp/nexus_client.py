@@ -40,6 +40,7 @@ class NexusCredentials(BaseModel):
     url: str = Field(..., description="Base URL of the Nexus instance")
     username: str = Field(..., description="Username for authentication")
     password: str = Field(..., description="Password for authentication")
+    verify_ssl: bool = Field(default=True, description="Verify SSL certificates (set to False for self-signed certs)")
 
     def validate_url(self) -> None:
         """Validate that the URL is properly formatted."""
@@ -91,6 +92,7 @@ class NexusClient:
         self._credentials = credentials
         self._base_url = credentials.url.rstrip("/")
         self._auth = httpx.BasicAuth(credentials.username, credentials.password)
+        self._verify_ssl = credentials.verify_ssl
 
     async def _request(
         self,
@@ -121,7 +123,7 @@ class NexusClient:
             params = {k: v for k, v in params.items() if v is not None}
 
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=30.0, verify=self._verify_ssl) as client:
                 response = await client.request(
                     method=method,
                     url=url,

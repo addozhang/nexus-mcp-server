@@ -32,6 +32,58 @@ class TestCredentialExtraction:
             assert creds.url == "https://nexus.example.com"
             assert creds.username == "testuser"
             assert creds.password == "testpass"
+            assert creds.verify_ssl is True  # Default value
+
+    def test_get_credentials_with_verify_ssl_false(self) -> None:
+        """Valid headers with verify_ssl=false should return NexusCredentials."""
+        mock_request = MagicMock()
+        mock_request.headers = {
+            "x-nexus-url": "https://nexus.example.com",
+            "x-nexus-username": "testuser",
+            "x-nexus-password": "testpass",
+            "x-nexus-verify-ssl": "false",
+        }
+
+        with patch(
+            "nexus_mcp.dependencies.get_http_request", return_value=mock_request
+        ):
+            creds = get_nexus_credentials()
+
+            assert creds.url == "https://nexus.example.com"
+            assert creds.username == "testuser"
+            assert creds.password == "testpass"
+            assert creds.verify_ssl is False
+
+    def test_get_credentials_with_verify_ssl_variations(self) -> None:
+        """Test various values for verify_ssl header."""
+        test_cases = [
+            ("false", False),
+            ("False", False),
+            ("FALSE", False),
+            ("0", False),
+            ("no", False),
+            ("true", True),
+            ("True", True),
+            ("TRUE", True),
+            ("1", True),
+            ("yes", True),
+            ("anything", True),  # Any non-false value is treated as true
+        ]
+
+        for header_value, expected in test_cases:
+            mock_request = MagicMock()
+            mock_request.headers = {
+                "x-nexus-url": "https://nexus.example.com",
+                "x-nexus-username": "testuser",
+                "x-nexus-password": "testpass",
+                "x-nexus-verify-ssl": header_value,
+            }
+
+            with patch(
+                "nexus_mcp.dependencies.get_http_request", return_value=mock_request
+            ):
+                creds = get_nexus_credentials()
+                assert creds.verify_ssl is expected, f"Failed for header value: {header_value}"
 
     def test_get_credentials_missing_url(self) -> None:
         """Missing URL header should raise MissingCredentialsError."""

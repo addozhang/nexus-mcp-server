@@ -33,6 +33,7 @@ def get_nexus_credentials() -> NexusCredentials:
     - X-Nexus-Url: Base URL of the Nexus instance
     - X-Nexus-Username: Username for authentication
     - X-Nexus-Password: Password for authentication
+    - X-Nexus-Verify-SSL: Verify SSL certificates (true/false, default: true)
 
     Returns:
         NexusCredentials with validated URL, username, and password.
@@ -48,6 +49,12 @@ def get_nexus_credentials() -> NexusCredentials:
     nexus_url: str | None = headers.get("x-nexus-url")
     nexus_username: str | None = headers.get("x-nexus-username")
     nexus_password: str | None = headers.get("x-nexus-password")
+    verify_ssl_header: str | None = headers.get("x-nexus-verify-ssl")
+
+    # Parse verify_ssl (default to True)
+    verify_ssl = True
+    if verify_ssl_header:
+        verify_ssl = verify_ssl_header.lower() not in ("false", "0", "no")
 
     # Check for missing headers
     missing: list[str] = []
@@ -82,4 +89,5 @@ def get_nexus_credentials() -> NexusCredentials:
         url=url,
         username=username,
         password=password,
+        verify_ssl=verify_ssl,
     )
