@@ -31,7 +31,7 @@
 
 2. **Deploy with docker-compose:**
    ```bash
-   docker-compose -f docker-compose.prod.yml up -d
+   docker-compose up -d
    ```
 
 ## Build Scripts
@@ -90,29 +90,6 @@ export PYTHON_VERSION=3.12
 ## Docker Compose Files
 
 ### `docker-compose.yml`
-Development/testing configuration:
-- Builds image locally
-- Exposes port 8000
-- Includes health check
-- Resource limits configured
-- Suitable for local testing
-
-**Usage:**
-```bash
-# Start
-docker-compose up
-
-# Start in background
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-### `docker-compose.prod.yml`
 Production configuration:
 - Uses pre-built image from Docker Hub
 - Includes Nginx reverse proxy
@@ -135,8 +112,31 @@ Production configuration:
 
 3. Deploy:
    ```bash
-   docker-compose -f docker-compose.prod.yml up -d
+   docker-compose up -d
    ```
+
+### `docker-compose.dev.yml`
+Development/testing configuration:
+- Builds image locally
+- Exposes port 8000
+- Includes health check
+- Resource limits configured
+- Suitable for local testing
+
+**Usage:**
+```bash
+# Start
+docker-compose -f docker-compose.dev.yml up
+
+# Start in background
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop
+docker-compose -f docker-compose.dev.yml down
+```
 
 ## Configuration
 
@@ -176,11 +176,11 @@ Response:
 
 ## Resource Limits
 
-### Development (docker-compose.yml)
+### Development (docker-compose.dev.yml)
 - CPU: 0.25-1.0 cores
 - Memory: 128MB-512MB
 
-### Production (docker-compose.prod.yml)
+### Production (docker-compose.yml)
 - CPU: 0.5-2.0 cores
 - Memory: 256MB-1GB
 

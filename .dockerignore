@@ -31,6 +31,7 @@ MANIFEST
 htmlcov/
 .tox/
 .nox/
+tests/
 
 # IDEs
 .vscode/
@@ -44,10 +45,11 @@ htmlcov/
 .git/
 .gitignore
 
-# Documentation
-*.md
+# Documentation (exclude all except README.md needed by pip)
 docs/
 specs/
+*.md
+!README.md
 
 # Docker
 Dockerfile*
