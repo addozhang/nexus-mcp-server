@@ -102,15 +102,12 @@ async def search_maven_artifact(
         Field(description="Repository name to search in (searches all if not specified)"),
     ] = None,
 ) -> dict[str, Any]:
-    """Search for Maven artifacts in Nexus Repository Manager.
+    """Search for Maven artifacts by group ID, artifact ID, or version.
 
-    Search Maven repositories by groupId, artifactId, or version.
-    Returns matching artifacts with their versions and download URLs.
-
-    Requires authentication via HTTP headers:
-    - X-Nexus-Url: Nexus instance URL
-    - X-Nexus-Username: Username
-    - X-Nexus-Password: Password
+    Searches across all Maven repositories (or a specific one) and returns 
+    matching artifacts with their available versions and download URLs.
+    
+    At least one of group_id or artifact_id must be provided.
     """
     try:
         creds = get_nexus_credentials()
@@ -149,7 +146,7 @@ async def get_maven_versions(
         Field(description="Continuation token from previous response for pagination"),
     ] = None,
 ) -> dict[str, Any]:
-    """Get versions of a specific Maven artifact with pagination.
+    """Get all versions of a specific Maven artifact with pagination.
 
     Returns a paginated list of available versions for the specified groupId:artifactId.
     Use continuation_token to fetch subsequent pages.
@@ -158,11 +155,6 @@ async def get_maven_versions(
     - versions: List of versions in this page
     - hasMore: Whether there are more pages
     - continuationToken: Token to fetch next page (if hasMore is true)
-
-    Requires authentication via HTTP headers:
-    - X-Nexus-Url: Nexus instance URL
-    - X-Nexus-Username: Username
-    - X-Nexus-Password: Password
     """
     try:
         creds = get_nexus_credentials()
@@ -195,15 +187,13 @@ async def search_python_package(
         Field(description="Repository name to search in (searches all if not specified)"),
     ] = None,
 ) -> dict[str, Any]:
-    """Search for Python packages in Nexus Repository Manager.
+    """Search for Python/PyPI packages by name.
 
-    Searches PyPI-format repositories for packages matching the given name.
-    Handles Python package naming conventions (underscores vs hyphens).
-
-    Requires authentication via HTTP headers:
-    - X-Nexus-Url: Nexus instance URL
-    - X-Nexus-Username: Username
-    - X-Nexus-Password: Password
+    Searches PyPI-format repositories and automatically handles Python's 
+    naming conventions (converts between hyphens and underscores, e.g., 
+    'my-package' vs 'my_package').
+    
+    Returns matching packages with their versions and download URLs.
     """
     try:
         creds = get_nexus_credentials()
@@ -236,7 +226,7 @@ async def get_python_versions(
         Field(description="Continuation token from previous response for pagination"),
     ] = None,
 ) -> dict[str, Any]:
-    """Get versions of a specific Python package with pagination.
+    """Get all versions of a specific Python package with pagination.
 
     Returns paginated versions of the package with format information
     (wheel, sdist, etc.) and download URLs.
@@ -245,11 +235,6 @@ async def get_python_versions(
     - versions: List of versions in this page
     - hasMore: Whether there are more pages
     - continuationToken: Token to fetch next page (if hasMore is true)
-
-    Requires authentication via HTTP headers:
-    - X-Nexus-Url: Nexus instance URL
-    - X-Nexus-Username: Username
-    - X-Nexus-Password: Password
     """
     try:
         creds = get_nexus_credentials()
@@ -277,15 +262,10 @@ async def list_docker_images(
         Field(description="Docker repository name to list images from"),
     ],
 ) -> dict[str, Any]:
-    """List Docker images in a Nexus repository.
+    """List all Docker images in a repository.
 
     Returns all Docker images available in the specified repository
-    with their latest tags.
-
-    Requires authentication via HTTP headers:
-    - X-Nexus-Url: Nexus instance URL
-    - X-Nexus-Username: Username
-    - X-Nexus-Password: Password
+    with their available tags (sorted by tag name).
     """
     try:
         creds = get_nexus_credentials()
@@ -309,15 +289,10 @@ async def get_docker_tags(
         Field(description="Docker image name (e.g., 'my-app' or 'library/nginx')"),
     ],
 ) -> dict[str, Any]:
-    """Get all tags for a specific Docker image.
+    """Get all tags/versions for a specific Docker image.
 
     Returns detailed information about all tags for the specified image,
-    including digest and asset information when available.
-
-    Requires authentication via HTTP headers:
-    - X-Nexus-Url: Nexus instance URL
-    - X-Nexus-Username: Username
-    - X-Nexus-Password: Password
+    including manifests, digests, and download URLs.
     """
     try:
         creds = get_nexus_credentials()
