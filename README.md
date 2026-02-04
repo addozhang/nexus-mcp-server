@@ -151,7 +151,7 @@ Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_confi
 {
   "mcpServers": {
     "nexus": {
-      "url": "http://localhost:8000/sse",
+      "url": "http://localhost:8000/mcp",
       "headers": {
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",
@@ -167,7 +167,7 @@ For self-signed certificates:
 {
   "mcpServers": {
     "nexus": {
-      "url": "http://localhost:8000/sse",
+      "url": "http://localhost:8000/mcp",
       "headers": {
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",
@@ -184,7 +184,7 @@ For other MCP clients that support HTTP transport:
 
 ```json
 {
-  "url": "http://localhost:8000/sse",
+  "url": "http://localhost:8000/mcp",
   "headers": {
     "X-Nexus-Url": "https://nexus.company.com",
     "X-Nexus-Username": "your-username",

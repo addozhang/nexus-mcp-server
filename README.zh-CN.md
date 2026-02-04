@@ -149,7 +149,7 @@ docker-compose up
 {
   "mcpServers": {
     "nexus": {
-      "url": "http://localhost:8000/sse",
+      "url": "http://localhost:8000/mcp",
       "headers": {
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",
@@ -165,7 +165,7 @@ docker-compose up
 {
   "mcpServers": {
     "nexus": {
-      "url": "http://localhost:8000/sse",
+      "url": "http://localhost:8000/mcp",
       "headers": {
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",

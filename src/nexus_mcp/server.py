@@ -343,4 +343,11 @@ def run_server() -> None:
     logger.info(
         f"Starting Nexus MCP Server on {args.host}:{args.port} (transport={args.transport})"
     )
-    mcp.run(transport=args.transport, host=args.host, port=args.port)
+    mcp.run(
+        transport=args.transport,
+        host=args.host,
+        port=args.port,
+        sse_path="/mcp",
+        message_path="/mcp/message",
+        streamable_http_path="/mcp",
+    )
