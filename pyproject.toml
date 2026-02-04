@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nexus-mcp-server"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for querying Sonatype Nexus Repository Manager"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,12 +14,6 @@ authors = [
 ]
 mcpName = "io.github.addozhang/nexus"
 keywords = ["mcp", "nexus", "sonatype", "repository", "maven", "pypi", "docker", "oss", "pro"]
-
-[project.urls]
-Homepage = "https://github.com/addozhang/nexus-mcp-server"
-Repository = "https://github.com/addozhang/nexus-mcp-server"
-Issues = "https://github.com/addozhang/nexus-mcp-server/issues"
-
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -29,12 +23,16 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-
 dependencies = [
     "fastmcp>=0.1.0",
     "httpx>=0.27.0",
     "pydantic>=2.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/addozhang/nexus-mcp-server"
+Repository = "https://github.com/addozhang/nexus-mcp-server"
+Issues = "https://github.com/addozhang/nexus-mcp-server/issues"
 
 [project.optional-dependencies]
 dev = [
