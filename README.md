@@ -20,6 +20,30 @@ MCP (Model Context Protocol) server for Sonatype Nexus Repository Manager 3 (OSS
 
 This server uses the standard Nexus REST API v1 (`/service/rest/v1`), which is available in both OSS and Pro editions.
 
+## Available Tools
+
+This MCP server provides **6 read-only tools** for querying Nexus repositories:
+
+### 📦 Maven Tools
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_maven_artifact` | Search for Maven artifacts | `group_id`, `artifact_id`, `version`, `repository` |
+| `get_maven_versions` | Get all versions of a Maven artifact (paginated) | `group_id`, `artifact_id`, `repository`, `page_size`, `continuation_token` |
+
+### 🐍 Python/PyPI Tools
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_python_package` | Search for Python packages | `name`, `repository` |
+| `get_python_versions` | Get all versions of a Python package (paginated) | `package_name`, `repository`, `page_size`, `continuation_token` |
+
+### 🐳 Docker Tools
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_docker_images` | List all Docker images in a repository | `repository` |
+| `get_docker_tags` | Get all tags for a Docker image | `repository`, `image_name` |
+
+**Note:** All tools are read-only and safe to use. No write operations (create/update/delete) are supported.
+
 ## Installation
 
 ### From Source

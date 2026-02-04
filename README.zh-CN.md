@@ -20,6 +20,30 @@
 - ✅ Nexus Repository Manager 3.x Pro（专业版）
 
 本服务器使用标准的 Nexus REST API v1 (`/service/rest/v1`)，该 API 在 OSS 和 Pro 版本中都可用。
+
+## 可用工具
+
+本 MCP 服务器提供 **6 个只读工具**用于查询 Nexus 仓库：
+
+### 📦 Maven 工具
+| 工具 | 说明 | 参数 |
+|------|------|------|
+| `search_maven_artifact` | 搜索 Maven 制品 | `group_id`, `artifact_id`, `version`, `repository` |
+| `get_maven_versions` | 获取 Maven 制品的所有版本（分页） | `group_id`, `artifact_id`, `repository`, `page_size`, `continuation_token` |
+
+### 🐍 Python/PyPI 工具
+| 工具 | 说明 | 参数 |
+|------|------|------|
+| `search_python_package` | 搜索 Python 包 | `name`, `repository` |
+| `get_python_versions` | 获取 Python 包的所有版本（分页） | `package_name`, `repository`, `page_size`, `continuation_token` |
+
+### 🐳 Docker 工具
+| 工具 | 说明 | 参数 |
+|------|------|------|
+| `list_docker_images` | 列出仓库中的所有 Docker 镜像 | `repository` |
+| `get_docker_tags` | 获取 Docker 镜像的所有标签 | `repository`, `image_name` |
+
+**注意：** 所有工具都是只读的，使用安全。不支持写操作（创建/更新/删除）。
 ## 安装
 
 ### 从源码安装
