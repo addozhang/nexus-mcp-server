@@ -33,9 +33,16 @@ python -m nexus_mcp
 
 ### Using Docker
 ```bash
-docker build -t nexus-mcp-server .
-docker run -p 8000:8000 nexus-mcp-server
+# Quick start
+docker run -p 8000:8000 addozhang/nexus-mcp-server:latest
+
+# Or use docker-compose
+docker-compose up
+
+# See DOCKER.md for detailed deployment guide
 ```
+
+For production deployment with SSL and reverse proxy, see [DOCKER.md](DOCKER.md).
 
 ## Configuration
 

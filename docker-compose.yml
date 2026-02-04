@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  nexus-mcp-server:
+    image: nexus-mcp-server:latest
+    container_name: nexus-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # Server configuration
+      - NEXUS_MCP_HOST=0.0.0.0
+      - NEXUS_MCP_PORT=8000
+      
+      # Optional: Set default Nexus credentials (not recommended for production)
+      # Better to pass via HTTP headers per request
+      # - NEXUS_URL=https://nexus.example.com
+      # - NEXUS_USERNAME=admin
+      # - NEXUS_PASSWORD=secret
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Network
+    networks:
+      - nexus-mcp-network
+
+networks:
+  nexus-mcp-network:
+    driver: bridge

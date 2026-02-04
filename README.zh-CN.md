@@ -33,9 +33,16 @@ python -m nexus_mcp
 
 ### 使用 Docker
 ```bash
-docker build -t nexus-mcp-server .
-docker run -p 8000:8000 nexus-mcp-server
+# 快速启动
+docker run -p 8000:8000 addozhang/nexus-mcp-server:latest
+
+# 或使用 docker-compose
+docker-compose up
+
+# 详细部署指南请参阅 DOCKER.md
 ```
+
+生产环境部署（包含 SSL 和反向代理），请参阅 [DOCKER.md](DOCKER.md)。
 
 ## 配置
 
