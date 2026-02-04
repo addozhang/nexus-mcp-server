@@ -10,9 +10,16 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "Nexus MCP Team" }
+    { name = "Addo Zhang", email = "addo.zhang@gmail.com" }
 ]
+mcpName = "io.github.addozhang/nexus"
 keywords = ["mcp", "nexus", "sonatype", "repository", "maven", "pypi", "docker", "oss", "pro"]
+
+[project.urls]
+Homepage = "https://github.com/addozhang/nexus-mcp-server"
+Repository = "https://github.com/addozhang/nexus-mcp-server"
+Issues = "https://github.com/addozhang/nexus-mcp-server/issues"
+
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
