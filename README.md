@@ -1,5 +1,7 @@
 # Nexus MCP Server
 
+<!-- mcp-name: io.github.addozhang/nexus -->
+
 English | [简体中文](README.zh-CN.md)
 
 MCP (Model Context Protocol) server for Sonatype Nexus Repository Manager 3 (OSS and Pro), enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
