@@ -12,7 +12,7 @@ license = "MIT"
 authors = [
     { name = "Nexus MCP Team" }
 ]
-keywords = ["mcp", "nexus", "sonatype", "repository", "maven", "pypi", "docker"]
+keywords = ["mcp", "nexus", "sonatype", "repository", "maven", "pypi", "docker", "oss", "pro"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

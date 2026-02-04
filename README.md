@@ -2,7 +2,7 @@
 
 English | [简体中文](README.zh-CN.md)
 
-MCP (Model Context Protocol) server for Sonatype Nexus Pro 3, enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
+MCP (Model Context Protocol) server for Sonatype Nexus Repository Manager 3 (OSS and Pro), enabling AI assistants to query Maven, Python (PyPI), and Docker repositories.
 
 ## Features
 - **HTTP streaming transport** - Modern SSE-based transport with header authentication
@@ -11,6 +11,14 @@ MCP (Model Context Protocol) server for Sonatype Nexus Pro 3, enabling AI assist
 - **Python support** - Search packages, list versions, get metadata
 - **Docker support** - List images, get tags, image metadata
 - **FastMCP framework** - Fast, modern Python implementation
+
+## Compatibility
+
+**Supported Nexus versions:**
+- ✅ Nexus Repository Manager 3.x OSS (Open Source)
+- ✅ Nexus Repository Manager 3.x Pro
+
+This server uses the standard Nexus REST API v1 (`/service/rest/v1`), which is available in both OSS and Pro editions.
 
 ## Installation
 

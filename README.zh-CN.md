@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-适用于 Sonatype Nexus Pro 3 的 MCP (Model Context Protocol) 服务器，让 AI 助手能够查询 Maven、Python (PyPI) 和 Docker 仓库。
+适用于 Sonatype Nexus Repository Manager 3（OSS 和 Pro 版本）的 MCP (Model Context Protocol) 服务器，让 AI 助手能够查询 Maven、Python (PyPI) 和 Docker 仓库。
 
 ## 功能特性
 - 🌐 **HTTP 流式传输** - 基于 SSE 的现代化传输，支持 HTTP 头认证
@@ -12,6 +12,14 @@
 - 🐳 **Docker 支持** - 列出镜像、获取标签、镜像元数据
 - ⚡ **FastMCP 框架** - 快速、现代化的 Python 实现
 
+
+## 兼容性
+
+**支持的 Nexus 版本：**
+- ✅ Nexus Repository Manager 3.x OSS（开源版）
+- ✅ Nexus Repository Manager 3.x Pro（专业版）
+
+本服务器使用标准的 Nexus REST API v1 (`/service/rest/v1`)，该 API 在 OSS 和 Pro 版本中都可用。
 ## 安装
 
 ### 从源码安装
