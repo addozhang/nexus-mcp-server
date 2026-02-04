@@ -42,7 +42,7 @@ docker-compose up
 # 详细部署指南请参阅 DOCKER.md
 ```
 
-生产环境部署（包含 SSL 和反向代理），请参阅 [DOCKER.md](DOCKER.md)。
+详细部署指南请参阅 [DOCKER.md](DOCKER.md)。
 
 ## 配置
 

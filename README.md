@@ -42,7 +42,7 @@ docker-compose up
 # See DOCKER.md for detailed deployment guide
 ```
 
-For production deployment with SSL and reverse proxy, see [DOCKER.md](DOCKER.md).
+For detailed deployment guide, see [DOCKER.md](DOCKER.md).
 
 ## Configuration
 

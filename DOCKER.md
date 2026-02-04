@@ -92,28 +92,23 @@ export PYTHON_VERSION=3.12
 ### `docker-compose.yml`
 Production configuration:
 - Uses pre-built image from Docker Hub
-- Includes Nginx reverse proxy
-- SSL/TLS support
+- Exposes port 8000
 - Health checks
 - Resource limits
 - Restart policies
-- Better logging
+- Suitable for local/production use
 
-**Setup:**
-1. Create SSL certificates:
-   ```bash
-   mkdir -p ssl
-   # Copy your cert.pem and key.pem to ssl/
-   ```
+**Usage:**
+```bash
+# Start
+docker-compose up -d
 
-2. Update `nginx.conf`:
-   - Change `server_name` to your domain
-   - Adjust SSL settings if needed
+# View logs
+docker-compose logs -f
 
-3. Deploy:
-   ```bash
-   docker-compose up -d
-   ```
+# Stop
+docker-compose down
+```
 
 ### `docker-compose.dev.yml`
 Development/testing configuration:
@@ -189,11 +184,8 @@ Adjust based on your workload and server capacity.
 ## Networking
 
 ### Port Mapping
-- **Development:** `8000:8000` (direct access)
-- **Production:** `443:443`, `80:80` (via Nginx)
-
-### Internal Network
-All services communicate via `nexus-mcp-network` bridge network.
+- **Development:** `8000:8000` (local build, direct access)
+- **Production:** `8000:8000` (pre-built image, direct access)
 
 ## Logs
 
@@ -237,23 +229,13 @@ curl http://localhost:8000/health
 netstat -tulpn | grep 8000
 ```
 
-### SSL/TLS issues (production)
-```bash
-# Verify nginx config
-docker-compose exec nginx nginx -t
-
-# Check SSL certificate
-openssl x509 -in ssl/cert.pem -text -noout
-```
-
 ## Security Best Practices
 
 1. **Never hardcode credentials** in docker-compose files
-2. **Use SSL/TLS** in production (nginx reverse proxy)
-3. **Limit resources** to prevent DoS
-4. **Keep images updated** regularly
-5. **Use secrets management** for production (Docker Secrets, Vault, etc.)
-6. **Network isolation** - don't expose MCP server port directly
+2. **Limit resources** to prevent DoS
+3. **Keep images updated** regularly
+4. **Use secrets management** for sensitive data (Docker Secrets, Vault, etc.)
+5. **Firewall rules** - restrict access to port 8000 if needed
 
 ## Example: Claude Desktop with Docker
 
@@ -264,22 +246,6 @@ Update your Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
   "mcpServers": {
     "nexus": {
       "url": "http://localhost:8000/sse",
-      "headers": {
-        "X-Nexus-Url": "https://nexus.company.com",
-        "X-Nexus-Username": "admin",
-        "X-Nexus-Password": "secret123"
-      }
-    }
-  }
-}
-```
-
-For production with SSL:
-```json
-{
-  "mcpServers": {
-    "nexus": {
-      "url": "https://nexus-mcp.example.com/sse",
       "headers": {
         "X-Nexus-Url": "https://nexus.company.com",
         "X-Nexus-Username": "admin",
