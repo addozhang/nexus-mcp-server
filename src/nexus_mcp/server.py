@@ -347,7 +347,4 @@ def run_server() -> None:
         transport=args.transport,
         host=args.host,
         port=args.port,
-        sse_path="/mcp",
-        message_path="/mcp/message",
-        streamable_http_path="/mcp",
     )
