@@ -139,8 +139,8 @@ async def get_maven_versions(
     ] = None,
     page_size: Annotated[
         int,
-        Field(description="Number of versions per page (default 50)", ge=1, le=1000),
-    ] = 50,
+        Field(description="Number of versions per page (default 20, max 1000)", ge=1, le=1000),
+    ] = 20,
     continuation_token: Annotated[
         str | None,
         Field(description="Continuation token from previous response for pagination"),
@@ -219,8 +219,8 @@ async def get_python_versions(
     ] = None,
     page_size: Annotated[
         int,
-        Field(description="Number of versions per page (default 50)", ge=1, le=1000),
-    ] = 50,
+        Field(description="Number of versions per page (default 20, max 1000)", ge=1, le=1000),
+    ] = 20,
     continuation_token: Annotated[
         str | None,
         Field(description="Continuation token from previous response for pagination"),

@@ -97,7 +97,7 @@ async def get_maven_versions_impl(
     group_id: str,
     artifact_id: str,
     repository: str | None = None,
-    page_size: int = 50,
+    page_size: int = 20,
     continuation_token: str | None = None,
 ) -> dict[str, Any]:
     """Get versions of a specific Maven artifact with pagination.
@@ -109,7 +109,7 @@ async def get_maven_versions_impl(
         group_id: Maven group ID
         artifact_id: Maven artifact ID
         repository: Optional repository name
-        page_size: Number of versions per page (default 50)
+        page_size: Number of versions per page (default 20)
         continuation_token: Token for next page (from previous response)
     """
     try:
@@ -216,7 +216,7 @@ async def get_python_versions_impl(
     creds: NexusCredentials,
     package_name: str,
     repository: str | None = None,
-    page_size: int = 50,
+    page_size: int = 20,
     continuation_token: str | None = None,
 ) -> dict[str, Any]:
     """Get versions of a specific Python package with pagination.
@@ -227,7 +227,7 @@ async def get_python_versions_impl(
     Args:
         package_name: Python package name
         repository: Optional repository name
-        page_size: Number of versions per page (default 50)
+        page_size: Number of versions per page (default 20)
         continuation_token: Token for next page (from previous response)
     """
     try:

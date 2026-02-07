@@ -11,3 +11,4 @@ build/
 .ruff_cache/
 *.log
 .mcpregistry_*
+test-venv/
